@@ -18,7 +18,7 @@ function onSubmit(e) {
       descricao: getResponseByTitle(itemResponses, 'Descreva o serviço...') || ''
     };
     
-    // URL do seu webhook (substitua pela URL do seu sistema)
+    // URL do seu webhook (URL final da Vercel)
     const webhookUrl = 'https://sistema-cozil.vercel.app/api/webhook/google-forms';
     
     // Enviar dados para o sistema
