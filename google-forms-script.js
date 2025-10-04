@@ -19,7 +19,7 @@ function onSubmit(e) {
     };
     
     // URL do seu webhook (URL final da Vercel)
-    const webhookUrl = 'https://sistema-cozil.vercel.app/api/webhook/google-forms';
+    const webhookUrl = 'https://cozil.vercel.app/api/webhook/google-forms';
     
     // Enviar dados para o sistema
     const options = {

@@ -2,5 +2,5 @@
   "NEXT_PUBLIC_SUPABASE_URL": "https://fshmmbprwsfwkpkgtaww.supabase.co",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaG1tYnByd3Nmd2twa2d0YXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NDIzOTYsImV4cCI6MjA3NTExODM5Nn0.atKM3zLSMJvlFkYOdWJuUbs-JTnwIH-9yqoVUeulCr8",
   "NEXTAUTH_SECRET": "sistema-cozil-secret-key-2024",
-  "NEXTAUTH_URL": "https://sistema-cozil.vercel.app"
+  "NEXTAUTH_URL": "https://cozil.vercel.app"
 }
