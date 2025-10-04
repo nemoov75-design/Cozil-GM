@@ -1,7 +1,7 @@
 # 🎉 Cozil - Configuração Final
 
 ## ✅ Status do Deploy
-- **✅ GitHub**: https://github.com/nemoov75-design/cozil-manutencao
+- **✅ GitHub**: https://github.com/nemoov75-design/cozil-maintenance
 - **✅ Vercel**: https://cozil-maintenance.vercel.app
 - **✅ Supabase**: Configurado e funcionando
 - **✅ API**: Endpoints funcionando
@@ -44,7 +44,7 @@ Cole e execute o conteúdo do arquivo `supabase-schema.sql`:
 - **Sistema**: https://cozil-maintenance.vercel.app
 - **Webhook**: https://cozil-maintenance.vercel.app/api/webhook/google-forms
 - **Supabase**: https://fshmmbprwsfwkpkgtaww.supabase.co
-- **GitHub**: https://github.com/nemoov75-design/cozil-manutencao
+- **GitHub**: https://github.com/nemoov75-design/cozil-maintenance
 
 ## 📋 Checklist Final
 
