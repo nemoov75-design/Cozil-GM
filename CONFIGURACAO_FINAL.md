@@ -2,7 +2,7 @@
 
 ## ✅ Status do Deploy
 - **✅ GitHub**: https://github.com/nemoov75-design/sistema-cozil
-- **✅ Vercel**: https://cozil.vercel.app
+- **✅ Vercel**: https://cozil-maintenance.vercel.app
 - **✅ Supabase**: Configurado e funcionando
 - **✅ API**: Endpoints funcionando
 
@@ -37,12 +37,12 @@ Cole e execute o conteúdo do arquivo `supabase-schema.sql`:
 
 1. Envie um formulário de teste
 2. Verifique se os dados aparecem no Supabase
-3. Verifique se aparecem no sistema: https://cozil.vercel.app
+3. Verifique se aparecem no sistema: https://cozil-maintenance.vercel.app
 
 ## 🔗 URLs Importantes
 
-- **Sistema**: https://cozil.vercel.app
-- **Webhook**: https://cozil.vercel.app/api/webhook/google-forms
+- **Sistema**: https://cozil-maintenance.vercel.app
+- **Webhook**: https://cozil-maintenance.vercel.app/api/webhook/google-forms
 - **Supabase**: https://fshmmbprwsfwkpkgtaww.supabase.co
 - **GitHub**: https://github.com/nemoov75-design/sistema-cozil
 
