@@ -5,7 +5,7 @@
 ### 1. Criar Repositório no GitHub
 
 1. Acesse: https://github.com/new
-2. Nome do repositório: `cozil-maintenance`
+2. Nome do repositório: `cozil-manutencao`
 3. Descrição: `Cozil - Sistema de Manutenção - Next.js + Supabase`
 4. Marque como **Público**
 5. **NÃO** marque "Add a README file"
@@ -16,7 +16,7 @@
 Após criar o repositório, execute:
 
 ```bash
-git remote add origin https://github.com/SEU_USUARIO/cozil-maintenance.git
+git remote add origin https://github.com/SEU_USUARIO/cozil-manutencao.git
 git branch -M main
 git push -u origin main
 ```
@@ -26,7 +26,7 @@ git push -u origin main
 1. Acesse: https://vercel.com
 2. Clique em **"New Project"**
 3. Conecte com o GitHub
-4. Selecione o repositório `cozil-maintenance`
+4. Selecione o repositório `cozil-manutencao`
 5. Clique em **"Deploy"**
 
 ### 4. Configurar Variáveis de Ambiente na Vercel
@@ -68,7 +68,7 @@ Execute o script SQL no Supabase:
 
 ## 🔗 URLs Importantes
 
-- **GitHub**: https://github.com/SEU_USUARIO/cozil-maintenance
+- **GitHub**: https://github.com/SEU_USUARIO/cozil-manutencao
 - **Vercel**: https://cozil-maintenance.vercel.app
 - **Supabase**: https://fshmmbprwsfwkpkgtaww.supabase.co
 
