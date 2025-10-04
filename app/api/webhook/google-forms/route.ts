@@ -8,15 +8,16 @@ export async function POST(request: NextRequest) {
     // Log para debug
     console.log('Dados recebidos do Google Forms:', body)
     
-    // Extrair dados do formulário
+    // Extrair dados do formulário e mapear corretamente
     const formData = {
       solicitante: body.solicitante || '',
       setor: body.setor || '',
-      data_solicitacao: body.data_solicitacao || new Date().toISOString(),
+      data_solicitacao: body.data_solicitacao || new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
       local: body.local || '',
       prioridade: body.prioridade || 'Média',
       tipo_manutencao: body.tipo_manutencao || 'Predial',
       descricao: body.descricao || '',
+      numero_os: `OS-${Date.now()}`, // Gerar número da OS automaticamente
       status: 'Pendente',
       created_at: new Date().toISOString(),
       last_updated: new Date().toISOString(),

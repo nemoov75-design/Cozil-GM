@@ -11,15 +11,18 @@ function onSubmit(e) {
     const formData = {
       solicitante: getResponseByTitle(itemResponses, 'Solicitante') || '',
       setor: getResponseByTitle(itemResponses, 'Setor') || '',
-      data_solicitacao: getResponseByTitle(itemResponses, 'Data da solicitação') || new Date().toISOString(),
+      data_solicitacao: getResponseByTitle(itemResponses, 'Data da solicitação') || new Date().toISOString().split('T')[0],
       local: getResponseByTitle(itemResponses, 'Local') || '',
       prioridade: getResponseByTitle(itemResponses, 'Prioridade') || 'Média',
       tipo_manutencao: getResponseByTitle(itemResponses, 'Tipo de Manutenção') || 'Predial',
       descricao: getResponseByTitle(itemResponses, 'Descreva o serviço...') || ''
     };
     
+    // Log para debug
+    console.log('📝 Dados do formulário:', formData);
+    
     // URL do seu webhook (URL final da Vercel)
-    const webhookUrl = 'https://cozil-maintenance.vercel.app/api/webhook/google-forms';
+    const webhookUrl = 'https://cozil-maintenance-dhkz.vercel.app/api/webhook/google-forms';
     
     // Enviar dados para o sistema
     const options = {
