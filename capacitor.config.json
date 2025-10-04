@@ -1,0 +1,15 @@
+{
+  "appId": "com.cozil.manutencao",
+  "appName": "Cozil",
+  "webDir": "out",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#ffffff",
+      "showSpinner": false
+    }
+  }
+}
