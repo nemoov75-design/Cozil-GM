@@ -1,4 +1,4 @@
-# 🎉 Sistema Cozil - Configuração Final
+# 🎉 Cozil - Configuração Final
 
 ## ✅ Status do Deploy
 - **✅ GitHub**: https://github.com/nemoov75-design/sistema-cozil
@@ -23,12 +23,12 @@ Cole e execute o conteúdo do arquivo `supabase-schema.sql`:
 1. Acesse: https://script.google.com
 2. Clique em **"Novo Projeto"**
 3. Cole o código do arquivo `google-forms-script.js`
-4. Salve o projeto com o nome: "Sistema Cozil - Webhook"
+4. Salve o projeto com o nome: "Cozil - Webhook"
 
 ### 3. Configurar Google Forms
 
 1. No seu Google Form, vá em **"Respostas"** → **"Mais"** → **"Script do Apps"**
-2. Selecione o script "Sistema Cozil - Webhook"
+2. Selecione o script "Cozil - Webhook"
 3. Configure o trigger:
    - **Tipo de evento**: "Envio de formulário"
    - **Função**: `onSubmit`
@@ -72,4 +72,4 @@ Seu sistema de manutenção está funcionando perfeitamente com:
 - Sistema de autenticação
 - Relatórios e métricas
 
-**Parabéns! O Sistema Cozil está funcionando! 🎉**
+**Parabéns! O Cozil está funcionando! 🎉**

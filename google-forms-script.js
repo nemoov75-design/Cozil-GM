@@ -68,7 +68,7 @@ function sendConfirmationEmail(formData) {
       - Tipo: ${formData.tipo_manutencao}
       - Descrição: ${formData.descricao}
       
-      Obrigado por usar o sistema Cozil!
+      Obrigado por usar o Cozil!
     `;
     
     MailApp.sendEmail({

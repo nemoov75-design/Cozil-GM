@@ -1,4 +1,4 @@
-# Sistema Cozil - Sistema de Manutenção
+# Cozil - Sistema de Manutenção
 
 Sistema completo de gerenciamento de ordens de serviço e manutenção desenvolvido com Next.js, TypeScript e Supabase.
 
@@ -61,4 +61,4 @@ Para dúvidas ou problemas, consulte a documentação ou entre em contato com a 
 
 ---
 
-**Sistema Cozil** - Desenvolvido com ❤️ para otimizar processos de manutenção.
+**Cozil** - Desenvolvido com ❤️ para otimizar processos de manutenção.
