@@ -1388,12 +1388,14 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                         </span>
                                         <Badge 
                                           className={`text-xs ${
-                                            os.prioridade === 'urgente' 
+                                            os.prioridade === 'Alta' || os.prioridade === 'urgente'
                                               ? 'bg-red-100 text-red-700 border-red-200' 
+                                              : os.prioridade === 'Média'
+                                              ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
                                               : 'bg-green-100 text-green-700 border-green-200'
                                           }`}
                                         >
-                                          {os.prioridade === 'urgente' ? 'Urgente' : 'Normal'}
+                                          {os.prioridade === 'urgente' ? 'Urgente' : os.prioridade || 'Normal'}
                                         </Badge>
                                         <Badge variant="outline" className="text-xs">
                                           {os.status}
@@ -1463,12 +1465,14 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                         </span>
                                         <Badge 
                                           className={`text-xs ${
-                                            os.prioridade === 'urgente' 
+                                            os.prioridade === 'Alta' || os.prioridade === 'urgente'
                                               ? 'bg-red-100 text-red-700 border-red-200' 
+                                              : os.prioridade === 'Média'
+                                              ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
                                               : 'bg-green-100 text-green-700 border-green-200'
                                           }`}
                                         >
-                                          {os.prioridade === 'urgente' ? 'Urgente' : 'Normal'}
+                                          {os.prioridade === 'urgente' ? 'Urgente' : os.prioridade || 'Normal'}
                                         </Badge>
                                         <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200">
                                           {os.status}
@@ -1903,7 +1907,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Número da OS</label>
-                  <p className="text-lg font-bold text-primary">{selectedOS.numeroOS}</p>
+                  <p className="text-lg font-bold text-primary">{selectedOS.numero_os || selectedOS.numeroOS}</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
@@ -1915,25 +1919,25 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Data</label>
-                  <p className="text-base">{new Date(selectedOS.data).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-base">{selectedOS.data_solicitacao ? new Date(selectedOS.data_solicitacao).toLocaleDateString('pt-BR') : (selectedOS.data ? new Date(selectedOS.data).toLocaleDateString('pt-BR') : 'N/A')}</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Equipamento</label>
-                  <p className="text-base">{selectedOS.equipamento}</p>
+                  <p className="text-base">{selectedOS.local || selectedOS.equipamento}</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Tipo de Manutenção</label>
-                  <p className="text-base capitalize">{selectedOS.tipoManutencao}</p>
+                  <p className="text-base capitalize">{selectedOS.tipo_manutencao || selectedOS.tipoManutencao}</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Prioridade</label>
-                  <Badge variant={selectedOS.prioridade === 'urgente' ? 'destructive' : 'secondary'}>
-                    {selectedOS.prioridade === 'urgente' ? 'Urgente' : 'Normal'}
+                  <Badge variant={selectedOS.prioridade === 'Alta' || selectedOS.prioridade === 'urgente' ? 'destructive' : selectedOS.prioridade === 'Média' ? 'secondary' : 'outline'}>
+                    {selectedOS.prioridade === 'urgente' ? 'Urgente' : selectedOS.prioridade || 'Normal'}
                   </Badge>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Criado em</label>
-                  <p className="text-base">{new Date(selectedOS.created).toLocaleString('pt-BR')}</p>
+                  <p className="text-base">{selectedOS.created_at ? new Date(selectedOS.created_at).toLocaleString('pt-BR') : (selectedOS.created ? new Date(selectedOS.created).toLocaleString('pt-BR') : 'N/A')}</p>
                 </div>
               </div>
               
@@ -1944,7 +1948,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Responsável pelo Setor</label>
-                <p className="text-base">{selectedOS.responsavelSetor}</p>
+                <p className="text-base">{selectedOS.responsavelSetor || 'A definir'}</p>
               </div>
               
               <div className="space-y-2">

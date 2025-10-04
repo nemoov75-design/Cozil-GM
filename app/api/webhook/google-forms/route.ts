@@ -8,16 +8,17 @@ export async function POST(request: NextRequest) {
     // Log para debug
     console.log('Dados recebidos do Google Forms:', body)
     
-    // Extrair dados do formulário e mapear corretamente
+    // Extrair dados do formulário e mapear corretamente para o sistema
     const formData = {
+      // Campos do banco de dados (Supabase)
       solicitante: body.solicitante || '',
       setor: body.setor || '',
-      data_solicitacao: body.data_solicitacao || new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
+      data_solicitacao: body.data_solicitacao || new Date().toISOString().split('T')[0],
       local: body.local || '',
       prioridade: body.prioridade || 'Média',
       tipo_manutencao: body.tipo_manutencao || 'Predial',
       descricao: body.descricao || '',
-      numero_os: `OS-${Date.now()}`, // Gerar número da OS automaticamente
+      numero_os: `OS-${Date.now()}`,
       status: 'Pendente',
       created_at: new Date().toISOString(),
       last_updated: new Date().toISOString(),
@@ -25,7 +26,14 @@ export async function POST(request: NextRequest) {
         status: 'Pendente',
         timestamp: new Date().toISOString(),
         user: 'Sistema'
-      }]
+      }],
+      // Campos adicionais para o frontend
+      numeroOS: `OS-${Date.now()}`,
+      data: body.data_solicitacao || new Date().toISOString().split('T')[0],
+      equipamento: body.local || '',
+      tipoManutencao: body.tipo_manutencao || 'Predial',
+      responsavelSetor: 'A definir',
+      created: new Date().toISOString()
     }
     
     // Inserir no Supabase
