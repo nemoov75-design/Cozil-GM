@@ -443,12 +443,24 @@ export function DesignaliCreative() {
 
     console.log('✏️ Editando OS:', osToEdit)
     
+    // Normalizar prioridade para o formato correto
+    let prioridade = osToEdit.prioridade || 'Média'
+    if (prioridade.toLowerCase() === 'normal') {
+      prioridade = 'Média'
+    } else if (prioridade.toLowerCase() === 'baixa') {
+      prioridade = 'Baixa'
+    } else if (prioridade.toLowerCase() === 'alta') {
+      prioridade = 'Alta'
+    } else if (prioridade.toLowerCase() === 'média') {
+      prioridade = 'Média'
+    }
+    
     setSelectedOS(osToEdit)
     setEditForm({
       setor: osToEdit.setor || '',
       equipamento: osToEdit.equipamento || '',
       tipo_manutencao: osToEdit.tipo_manutencao || osToEdit.tipoManutencao || '',
-      prioridade: osToEdit.prioridade || '',
+      prioridade: prioridade,
       descricao: osToEdit.descricao || '',
       solicitante: osToEdit.solicitante || '',
       responsavel_setor: osToEdit.responsavel_setor || osToEdit.responsavelSetor || '',
@@ -2972,7 +2984,8 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                       <SelectValue placeholder="Selecione a prioridade" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="Baixa">Baixa</SelectItem>
+                      <SelectItem value="Média">Média</SelectItem>
                       <SelectItem value="Alta">Alta</SelectItem>
                     </SelectContent>
                   </Select>
