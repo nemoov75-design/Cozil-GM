@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { signIn, getSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +8,31 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { User, Lock, AlertCircle } from "lucide-react"
+
+// Usuários cadastrados (mesmos do NextAuth)
+const users = [
+  {
+    id: '1',
+    email: 'admin@cozil.com',
+    password: 'admin123',
+    name: 'Administrador Cozil',
+    role: 'admin'
+  },
+  {
+    id: '2', 
+    email: 'tecnico@cozil.com',
+    password: 'tecnico123',
+    name: 'Técnico Cozil',
+    role: 'tecnico'
+  },
+  {
+    id: '3',
+    email: 'gestor@cozil.com', 
+    password: 'gestor123',
+    name: 'Gestor Cozil',
+    role: 'gestor'
+  }
+]
 
 export default function SignIn() {
   const [email, setEmail] = useState("")
@@ -23,21 +47,29 @@ export default function SignIn() {
     setError("")
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      })
+      // Verificar credenciais
+      const user = users.find(u => 
+        u.email === email && 
+        u.password === password
+      )
 
-      if (result?.error) {
-        setError("Email ou senha incorretos")
-      } else {
-        // Verificar se o login foi bem-sucedido
-        const session = await getSession()
-        if (session) {
-          router.push("/")
-          router.refresh()
+      if (user) {
+        // Salvar usuário no localStorage (como o sistema espera)
+        const userData = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          image: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=ef4444&color=fff`
         }
+        
+        localStorage.setItem('user', JSON.stringify(userData))
+        
+        // Redirecionar para a página inicial
+        router.push("/")
+        router.refresh()
+      } else {
+        setError("Email ou senha incorretos")
       }
     } catch (error) {
       setError("Erro ao fazer login. Tente novamente.")
