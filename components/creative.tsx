@@ -429,65 +429,98 @@ export function DesignaliCreative() {
   };
 
   // Função para editar OS
-  const handleEditOS = (os: any) => {
-    setSelectedOS(os)
+  const handleEditOS = (os?: any) => {
+    // Se não passar OS, usar o selectedOS
+    const osToEdit = os || selectedOS
+    
+    if (!osToEdit) {
+      console.error('❌ Nenhuma OS selecionada para editar')
+      return
+    }
+
+    console.log('✏️ Editando OS:', osToEdit)
+    
+    setSelectedOS(osToEdit)
     setEditForm({
-      setor: os.setor || '',
-      equipamento: os.equipamento || '',
-      tipo_manutencao: os.tipo_manutencao || os.tipoManutencao || '',
-      prioridade: os.prioridade || '',
-      descricao: os.descricao || '',
-      solicitante: os.solicitante || '',
-      responsavel_setor: os.responsavel_setor || os.responsavelSetor || '',
-      data: os.data || new Date(os.created_at).toISOString().split('T')[0]
+      setor: osToEdit.setor || '',
+      equipamento: osToEdit.equipamento || '',
+      tipo_manutencao: osToEdit.tipo_manutencao || osToEdit.tipoManutencao || '',
+      prioridade: osToEdit.prioridade || '',
+      descricao: osToEdit.descricao || '',
+      solicitante: osToEdit.solicitante || '',
+      responsavel_setor: osToEdit.responsavel_setor || osToEdit.responsavelSetor || '',
+      data: osToEdit.data || osToEdit.data_solicitacao || new Date(osToEdit.created_at).toISOString().split('T')[0]
     })
     setShowEditModal(true)
   }
 
   // Função para deletar OS
-  const handleDeleteOS = async (os: any) => {
-    // Pegar o ID correto da OS
-    const osId = os?.id || selectedOS?.id
+  const handleDeleteOS = async (os?: any) => {
+    // Usar o objeto passado ou o selectedOS
+    const osToDelete = os || selectedOS
     
-    console.log('🗑️ Tentando deletar OS:', { os, selectedOS, osId })
+    console.log('🗑️ DEBUG - Objeto completo:', {
+      osPassado: os,
+      selectedOS: selectedOS,
+      osToDelete: osToDelete,
+      id: osToDelete?.id,
+      numeroOS: osToDelete?.numero_os
+    })
     
-    if (!osId) {
-      alert('Erro: ID da OS não encontrado')
+    if (!osToDelete || !osToDelete.id) {
+      console.error('❌ Erro: OS inválida ou sem ID')
+      alert('Erro: OS não encontrada ou sem ID válido')
       return
     }
 
-    if (!confirm('Tem certeza que deseja excluir esta Ordem de Serviço? Esta ação não pode ser desfeita.')) {
+    const osId = osToDelete.id
+    console.log('✅ ID válido encontrado:', osId, 'tipo:', typeof osId)
+
+    if (!confirm(`Tem certeza que deseja excluir a OS #${osToDelete.numero_os}?\n\nEsta ação não pode ser desfeita.`)) {
       return
     }
 
     try {
-      console.log('🔄 Fazendo requisição DELETE para:', `/api/os/delete?id=${osId}`)
+      const url = `/api/os/delete?id=${osId}`
+      console.log('🔄 Fazendo requisição DELETE para:', url)
       
-      const response = await fetch(`/api/os/delete?id=${osId}`, {
+      const response = await fetch(url, {
         method: 'DELETE',
       })
 
-      console.log('📡 Resposta da API:', response.status, response.statusText)
+      console.log('📡 Resposta da API:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
 
       if (response.ok) {
-        console.log('✅ OS deletada com sucesso')
+        const result = await response.json()
+        console.log('✅ Resposta de sucesso:', result)
         
         // Fechar modal
         setShowOSDetails(false)
         
-        // Mostrar mensagem de sucesso
-        alert('OS excluída com sucesso! A página será recarregada.')
+        // Atualizar lista local imediatamente
+        setWorkOrders(prev => prev.filter(o => o.id !== osId))
         
-        // Recarregar a página para garantir que tudo está sincronizado
-        window.location.reload()
+        // Mostrar toast de sucesso
+        setToastMessage('✅ OS excluída com sucesso!')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+        
+        // Recarregar dados do servidor após um pequeno delay
+        setTimeout(() => {
+          fetchWorkOrders()
+        }, 500)
       } else {
         const error = await response.json()
-        console.error('❌ Erro ao deletar OS:', error)
+        console.error('❌ Erro da API:', error)
         alert('Erro ao excluir OS: ' + (error.error || 'Erro desconhecido'))
       }
     } catch (error) {
       console.error('❌ Erro ao deletar OS:', error)
-      alert('Erro ao excluir OS. Tente novamente.')
+      alert('Erro ao excluir OS: ' + error)
     }
   }
 
@@ -2647,7 +2680,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                   <Button 
                     variant="outline" 
                     className="rounded-2xl bg-transparent text-sm"
-                    onClick={handleEditOS}
+                    onClick={() => handleEditOS(selectedOS)}
                   >
                     📝 Editar OS
                   </Button>
