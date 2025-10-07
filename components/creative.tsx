@@ -457,72 +457,6 @@ export function DesignaliCreative() {
     setShowEditModal(true)
   }
 
-  // Função para deletar OS
-  const handleDeleteOS = async (os?: any) => {
-    // Usar o objeto passado ou o selectedOS
-    const osToDelete = os || selectedOS
-    
-    console.log('🗑️ DEBUG - Objeto completo:', {
-      osPassado: os,
-      selectedOS: selectedOS,
-      osToDelete: osToDelete,
-      id: osToDelete?.id,
-      numeroOS: osToDelete?.numero_os
-    })
-    
-    if (!osToDelete || !osToDelete.id) {
-      console.error('❌ Erro: OS inválida ou sem ID')
-      alert('Erro: OS não encontrada ou sem ID válido')
-      return
-    }
-
-    const osId = osToDelete.id
-    console.log('✅ ID válido encontrado:', osId, 'tipo:', typeof osId)
-
-    if (!confirm(`Tem certeza que deseja excluir a OS #${osToDelete.numero_os}?\n\nEsta ação não pode ser desfeita.`)) {
-      return
-    }
-
-    try {
-      const url = `/api/os/delete?id=${osId}`
-      console.log('🔄 Fazendo requisição DELETE para:', url)
-      
-      const response = await fetch(url, {
-        method: 'DELETE',
-      })
-
-      console.log('📡 Resposta da API:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Resposta de sucesso:', result)
-        
-        // Fechar modal imediatamente
-        setShowOSDetails(false)
-        
-        // Mostrar toast de sucesso
-        setToastMessage('✅ OS excluída com sucesso!')
-        setShowToast(true)
-        setTimeout(() => setShowToast(false), 3000)
-        
-        // Recarregar dados do servidor IMEDIATAMENTE para garantir sincronização
-        await fetchWorkOrders()
-        
-        console.log('🔄 Lista de OSs atualizada após exclusão')
-      } else {
-        const error = await response.json()
-        console.error('❌ Erro da API:', error)
-        alert('Erro ao excluir OS: ' + (error.error || 'Erro desconhecido'))
-      }
-    } catch (error) {
-      console.error('❌ Erro ao deletar OS:', error)
-      alert('Erro ao excluir OS: ' + error)
-    }
-  }
 
   // Função para criar nova OS
   const handleCreateNewOS = async () => {
@@ -614,23 +548,52 @@ export function DesignaliCreative() {
 
   // Função para salvar edição
   const handleSaveEdit = async () => {
+    console.log('💾 Salvando edição...')
+    console.log('📝 Dados a serem enviados:', {
+      osId: selectedOS?.id,
+      selectedOS: selectedOS,
+      editForm: editForm
+    })
+
+    if (!selectedOS || !selectedOS.id) {
+      console.error('❌ Erro: selectedOS inválido ou sem ID')
+      setToastMessage('❌ Erro: OS não encontrada')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+      return
+    }
+
     setIsSaving(true)
     try {
+      const payload = { 
+        osId: selectedOS.id, 
+        updates: editForm 
+      }
+      
+      console.log('📤 Payload sendo enviado:', JSON.stringify(payload, null, 2))
+      
       const response = await fetch('/api/os/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          osId: selectedOS.id, 
-          updates: editForm 
-        }),
+        body: JSON.stringify(payload),
+      })
+
+      console.log('📡 Resposta recebida:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
       })
 
       const result = await response.json()
+      console.log('📊 Resultado da API:', result)
 
       if (result.success) {
+        console.log('✅ OS atualizada com sucesso!')
         setShowEditModal(false)
+        
+        // Recarregar dados
         await fetchWorkOrders()
         
         // Notificação de sucesso
@@ -639,12 +602,13 @@ export function DesignaliCreative() {
         setTimeout(() => setShowToast(false), 3000)
       } else {
         // Notificação de erro
-        setToastMessage(`❌ Erro: ${result.error}`)
+        console.error('❌ Erro retornado pela API:', result)
+        setToastMessage(`❌ Erro: ${result.error || 'Erro desconhecido'}`)
         setShowToast(true)
-        setTimeout(() => setShowToast(false), 3000)
+        setTimeout(() => setShowToast(false), 5000)
       }
     } catch (error) {
-      console.error('Erro ao salvar edição:', error)
+      console.error('❌ Erro ao salvar edição:', error)
       setToastMessage('❌ Erro ao salvar edição')
       setShowToast(true)
       setTimeout(() => setShowToast(false), 3000)
@@ -2690,13 +2654,6 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                     onClick={handlePrintOS}
                   >
                     🖨️ Imprimir
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="rounded-2xl bg-transparent border-red-300 text-red-600 hover:bg-red-50 text-sm"
-                    onClick={() => handleDeleteOS(selectedOS)}
-                  >
-                    🗑️ Excluir
                   </Button>
                   <Button 
                     variant="outline" 
