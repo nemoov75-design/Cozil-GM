@@ -26,9 +26,10 @@ export default function SignIn() {
       const response = await fetch('/api/users')
       const { users } = await response.json()
       
-      // Verificar se o usuário existe e está ativo
+      // Verificar se o usuário existe, senha correta e está ativo
       const user = users.find((u: any) => 
         u.email === email && 
+        u.password === password &&
         u.active === true
       )
 
@@ -50,7 +51,7 @@ export default function SignIn() {
         router.push("/")
         router.refresh()
       } else {
-        setError("Email não encontrado ou usuário inativo")
+        setError("Email ou senha incorretos, ou usuário inativo")
       }
     } catch (error) {
       setError("Erro ao fazer login. Tente novamente.")

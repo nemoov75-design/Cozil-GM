@@ -254,7 +254,7 @@ export function DesignaliCreative() {
           </p>
           
           <Button
-            onClick={() => window.location.href = '/auth/signin'}
+            onClick={() => window.location.href = '/auth'}
             className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             <User className="w-5 h-5 mr-2" />

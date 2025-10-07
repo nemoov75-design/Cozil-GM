@@ -31,11 +31,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('📝 Criando novo usuário:', body.email)
     
-    const { name, email, setor, cargo, telefone, receive_notifications = true } = body
+    const { name, email, password, setor, cargo, telefone, receive_notifications = true } = body
     
     // Validação
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Nome e e-mail são obrigatórios' }, { status: 400 })
+    if (!name || !email || !password) {
+      return NextResponse.json({ error: 'Nome, e-mail e senha são obrigatórios' }, { status: 400 })
     }
     
     // Criar usuário
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       .insert([{
         name,
         email,
+        password,
         setor,
         cargo,
         telefone,
