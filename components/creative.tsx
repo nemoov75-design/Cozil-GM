@@ -501,21 +501,18 @@ export function DesignaliCreative() {
         const result = await response.json()
         console.log('✅ Resposta de sucesso:', result)
         
-        // Fechar modal
+        // Fechar modal imediatamente
         setShowOSDetails(false)
-        
-        // Atualizar lista local imediatamente
-        setWorkOrders(prev => prev.filter(o => o.id !== osId))
         
         // Mostrar toast de sucesso
         setToastMessage('✅ OS excluída com sucesso!')
         setShowToast(true)
         setTimeout(() => setShowToast(false), 3000)
         
-        // Recarregar dados do servidor após um pequeno delay
-        setTimeout(() => {
-          fetchWorkOrders()
-        }, 500)
+        // Recarregar dados do servidor IMEDIATAMENTE para garantir sincronização
+        await fetchWorkOrders()
+        
+        console.log('🔄 Lista de OSs atualizada após exclusão')
       } else {
         const error = await response.json()
         console.error('❌ Erro da API:', error)
