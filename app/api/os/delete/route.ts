@@ -21,34 +21,35 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'ID da OS é obrigatório' }, { status: 400 })
     }
 
-    console.log('🗑️ Deletando OS:', osId)
+    console.log('🗑️ Deletando OS com ID:', osId, 'tipo:', typeof osId)
     
     // 1. Buscar a OS antes de deletar (para pegar o numero_os)
     const { data: osData, error: fetchError } = await supabase
       .from('work_orders')
-      .select('numero_os')
-      .eq('id', osId)
+      .select('*')
+      .eq('id', parseInt(osId))
       .single()
     
     if (fetchError || !osData) {
       console.error('❌ OS não encontrada:', fetchError)
-      return NextResponse.json({ error: 'OS não encontrada' }, { status: 404 })
+      return NextResponse.json({ error: 'OS não encontrada: ' + (fetchError?.message || 'Não existe') }, { status: 404 })
     }
 
+    console.log('📋 OS encontrada:', osData)
     const numeroOS = osData.numero_os
 
     // 2. Deletar do Supabase
     const { error: deleteError } = await supabase
       .from('work_orders')
       .delete()
-      .eq('id', osId)
+      .eq('id', parseInt(osId))
     
     if (deleteError) {
       console.error('❌ Erro ao deletar OS do Supabase:', deleteError)
       return NextResponse.json({ error: deleteError.message }, { status: 500 })
     }
     
-    console.log('✅ OS deletada do Supabase')
+    console.log('✅ OS deletada do Supabase com sucesso!')
 
     // 3. Deletar do Google Sheets
     try {
