@@ -445,15 +445,29 @@ export function DesignaliCreative() {
   }
 
   // Função para deletar OS
-  const handleDeleteOS = async (osId: string) => {
+  const handleDeleteOS = async (os: any) => {
+    // Pegar o ID correto da OS
+    const osId = os?.id || selectedOS?.id
+    
+    console.log('🗑️ Tentando deletar OS:', { os, selectedOS, osId })
+    
+    if (!osId) {
+      alert('Erro: ID da OS não encontrado')
+      return
+    }
+
     if (!confirm('Tem certeza que deseja excluir esta Ordem de Serviço? Esta ação não pode ser desfeita.')) {
       return
     }
 
     try {
+      console.log('🔄 Fazendo requisição DELETE para:', `/api/os/delete?id=${osId}`)
+      
       const response = await fetch(`/api/os/delete?id=${osId}`, {
         method: 'DELETE',
       })
+
+      console.log('📡 Resposta da API:', response.status, response.statusText)
 
       if (response.ok) {
         console.log('✅ OS deletada com sucesso')
@@ -2647,7 +2661,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                   <Button 
                     variant="outline" 
                     className="rounded-2xl bg-transparent border-red-300 text-red-600 hover:bg-red-50 text-sm"
-                    onClick={() => handleDeleteOS(selectedOS.id)}
+                    onClick={() => handleDeleteOS(selectedOS)}
                   >
                     🗑️ Excluir
                   </Button>
