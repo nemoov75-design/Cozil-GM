@@ -24,13 +24,16 @@ export async function POST(request: NextRequest) {
       'solicitante',
       'responsavel_setor',
       'fotos',
-      'data'
+      'data',
+      'data_solicitacao'
     ])
 
     const updateData: Record<string, any> = {}
     Object.entries(updates).forEach(([key, value]) => {
       if (allowedFields.has(key)) {
-        updateData[key] = value
+        // Se o campo for 'data', converter para 'data_solicitacao'
+        const fieldName = key === 'data' ? 'data_solicitacao' : key
+        updateData[fieldName] = value
       }
     })
 

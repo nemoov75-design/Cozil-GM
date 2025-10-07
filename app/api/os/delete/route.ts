@@ -27,7 +27,7 @@ export async function DELETE(request: NextRequest) {
     const { data: osData, error: fetchError } = await supabase
       .from('work_orders')
       .select('*')
-      .eq('id', parseInt(osId))
+      .eq('id', osId)
       .single()
     
     if (fetchError || !osData) {
@@ -42,7 +42,7 @@ export async function DELETE(request: NextRequest) {
     const { error: deleteError } = await supabase
       .from('work_orders')
       .delete()
-      .eq('id', parseInt(osId))
+      .eq('id', osId)
     
     if (deleteError) {
       console.error('❌ Erro ao deletar OS do Supabase:', deleteError)

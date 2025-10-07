@@ -297,6 +297,9 @@ export function DesignaliCreative() {
       const data = await response.json()
       
       if (data.success) {
+        // Debug: Verificar primeiros registros
+        console.log('📊 Primeiros 2 registros da API:', data.orders.slice(0, 2))
+        
         // Remover duplicatas usando Map para garantir unicidade (mais robusto)
         const orderMap = new Map()
         data.orders.forEach((os: any) => {
