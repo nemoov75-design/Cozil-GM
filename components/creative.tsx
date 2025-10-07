@@ -457,16 +457,30 @@ export function DesignaliCreative() {
 
       if (response.ok) {
         console.log('✅ OS deletada com sucesso')
-        setShowToast(true)
-        setToastMessage('OS excluída com sucesso!')
         
         // Fechar modal se estiver aberto
         setShowOSDetails(false)
         
-        // Recarregar OSs
-        await fetchWorkOrders()
+        // Remover OS da lista local imediatamente
+        setWorkOrders(prevOrders => prevOrders.filter(os => os.id !== osId))
         
+        // Atualizar estatísticas
+        const updatedOrders = workOrders.filter(os => os.id !== osId)
+        const stats = {
+          pendentes: updatedOrders.filter((os: any) => os.status !== 'Concluído').length,
+          execucao: 0,
+          concluidas: updatedOrders.filter((os: any) => os.status === 'Concluído').length,
+          altas: updatedOrders.filter((os: any) => os.prioridade === 'Alta').length
+        }
+        setDashboardStats(stats)
+        
+        // Mostrar mensagem de sucesso
+        setShowToast(true)
+        setToastMessage('OS excluída com sucesso!')
         setTimeout(() => setShowToast(false), 3000)
+        
+        // Recarregar do servidor para garantir
+        setTimeout(() => fetchWorkOrders(), 1000)
       } else {
         const error = await response.json()
         console.error('❌ Erro ao deletar OS:', error)
