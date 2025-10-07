@@ -444,6 +444,40 @@ export function DesignaliCreative() {
     setShowEditModal(true)
   }
 
+  // Função para deletar OS
+  const handleDeleteOS = async (osId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta Ordem de Serviço? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/os/delete?id=${osId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        console.log('✅ OS deletada com sucesso')
+        setShowToast(true)
+        setToastMessage('OS excluída com sucesso!')
+        
+        // Fechar modal se estiver aberto
+        setShowOSDetails(false)
+        
+        // Recarregar OSs
+        await fetchWorkOrders()
+        
+        setTimeout(() => setShowToast(false), 3000)
+      } else {
+        const error = await response.json()
+        console.error('❌ Erro ao deletar OS:', error)
+        alert('Erro ao excluir OS: ' + (error.error || 'Erro desconhecido'))
+      }
+    } catch (error) {
+      console.error('❌ Erro ao deletar OS:', error)
+      alert('Erro ao excluir OS. Tente novamente.')
+    }
+  }
+
   // Função para criar nova OS
   const handleCreateNewOS = async () => {
     setIsCreating(true)
@@ -2610,6 +2644,13 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                     onClick={handlePrintOS}
                   >
                     🖨️ Imprimir
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="rounded-2xl bg-transparent border-red-300 text-red-600 hover:bg-red-50 text-sm"
+                    onClick={() => handleDeleteOS(selectedOS.id)}
+                  >
+                    🗑️ Excluir
                   </Button>
                   <Button 
                     variant="outline" 
