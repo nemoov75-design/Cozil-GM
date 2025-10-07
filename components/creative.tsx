@@ -24,6 +24,7 @@ import {
   BarChart3,
   Clock,
   AlertTriangle,
+  AlertCircle,
   CheckCircle,
   PlayCircle,
   Upload,
@@ -53,13 +54,6 @@ import { EmailReportManager } from './email-report-manager'
 
 const maintenanceTypes = [
   {
-    name: "Elétrica",
-    icon: <Zap className="text-red-500" />,
-    description: "Instalações e reparos elétricos",
-    count: 0,
-    urgent: 0,
-  },
-  {
     name: "Mecânica",
     icon: <Cog className="text-orange-500" />,
     description: "Equipamentos e máquinas",
@@ -69,14 +63,7 @@ const maintenanceTypes = [
   {
     name: "Predial",
     icon: <Building className="text-red-600" />,
-    description: "Estrutura e acabamentos",
-    count: 0,
-    urgent: 0,
-  },
-  {
-    name: "Hidráulica",
-    icon: <Droplets className="text-blue-500" />,
-    description: "Sistema hidráulico",
+    description: "Manutenção predial",
     count: 0,
     urgent: 0,
   },
@@ -93,6 +80,11 @@ const sidebarItems = [
     key: "home",
   },
   {
+    title: "Nova OS",
+    icon: <Plus />,
+    key: "new-order",
+  },
+  {
     title: "Todas as OSs",
     icon: <FileText />,
     key: "all-orders",
@@ -101,6 +93,11 @@ const sidebarItems = [
     title: "Relatórios",
     icon: <BarChart3 />,
     key: "reports",
+  },
+  {
+    title: "Configurações",
+    icon: <Settings />,
+    key: "settings",
   },
 ]
 
@@ -112,15 +109,18 @@ export function DesignaliCreative() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [workOrders, setWorkOrders] = useState(initialWorkOrders)
+  const [archivedOrders, setArchivedOrders] = useState<any[]>([])
+  const [isLoadingArchived, setIsLoadingArchived] = useState(false)
   const [dashboardStats, setDashboardStats] = useState({
     pendentes: 0,
     execucao: 0,
     concluidas: 0,
-    urgentes: 0
+    altas: 0
   })
   const [selectedOS, setSelectedOS] = useState<any>(null)
   const [showOSDetails, setShowOSDetails] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showNewOSModal, setShowNewOSModal] = useState(false)
   const [editForm, setEditForm] = useState<any>({})
   const [showFilters, setShowFilters] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -145,7 +145,28 @@ export function DesignaliCreative() {
     fotos: [] as File[],
     assinatura: "",
   })
+  
+  const [newOSForm, setNewOSForm] = useState({
+    solicitante: "",
+    setor: "",
+    data_solicitacao: "",
+    local: "",
+    prioridade: "Média",
+    tipo_manutencao: "Predial",
+    descricao: "",
+    responsavelSetor: "",
+    fotos: [] as string[]
+  })
   const [showEmailManager, setShowEmailManager] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [selectedMaintenanceType, setSelectedMaintenanceType] = useState<string | null>(null)
+  
+  // Estados para feedback visual
+  const [isCreating, setIsCreating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [isSyncing, setIsSyncing] = useState(false)
 
   // Verificar se o usuário está logado
   useEffect(() => {
@@ -201,7 +222,7 @@ export function DesignaliCreative() {
           >
             <Wrench className="h-8 w-8 text-white" />
           </motion.div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Cozil</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">CozilTech</h2>
           <p className="text-gray-600">Carregando sistema...</p>
         </motion.div>
       </div>
@@ -226,7 +247,7 @@ export function DesignaliCreative() {
           </motion.div>
           
           <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent mb-4">
-            Cozil
+            CozilTech
           </h1>
           <p className="text-gray-600 mb-8 text-lg">
             Sistema de Gestão de Manutenção
@@ -242,6 +263,31 @@ export function DesignaliCreative() {
         </motion.div>
       </div>
     )
+  }
+
+  // Função auxiliar para formatar data (evita problema de timezone)
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A'
+    
+    // Extrair apenas a parte da data (YYYY-MM-DD) se vier com timestamp
+    let dateOnly = dateString
+    if (dateString.includes('T')) {
+      dateOnly = dateString.split('T')[0]
+    }
+    
+    // Se a data está no formato YYYY-MM-DD, converter diretamente
+    if (dateOnly.includes('-') && dateOnly.length === 10) {
+      const [year, month, day] = dateOnly.split('-')
+      return `${day}/${month}/${year}`
+    }
+    
+    // Caso contrário, usar Date (pode ter problema de timezone)
+    try {
+      const date = new Date(dateString + 'T12:00:00') // Adicionar meio-dia para evitar timezone
+      return date.toLocaleDateString('pt-BR')
+    } catch {
+      return 'N/A'
+    }
   }
 
   // Função para buscar OSs da API
@@ -275,13 +321,13 @@ export function DesignaliCreative() {
           pendentes: uniqueOrders.filter((os: any) => os.status !== 'Concluído').length,
           execucao: 0, // Não usado mais
           concluidas: uniqueOrders.filter((os: any) => os.status === 'Concluído').length,
-          urgentes: uniqueOrders.filter((os: any) => os.prioridade === 'urgente').length
+          altas: uniqueOrders.filter((os: any) => os.prioridade === 'Alta').length
         }
         
         setDashboardStats(stats)
         
-        // Verificar notificações urgentes não vistas
-        const urgentOrders = uniqueOrders.filter((os: any) => os.prioridade === 'urgente' && os.status !== 'Concluído')
+        // Verificar notificações de alta prioridade não vistas
+        const urgentOrders = uniqueOrders.filter((os: any) => os.prioridade === 'Alta' && os.status !== 'Concluído')
         const unviewedUrgentOrders = urgentOrders.filter((os: any) => !viewedNotifications.includes(os.id))
         
         setNotifications(unviewedUrgentOrders.length)
@@ -299,10 +345,31 @@ export function DesignaliCreative() {
   }
 
 
+  // Função para buscar OSs arquivadas do Google Sheets
+  const fetchArchivedOrders = async () => {
+    setIsLoadingArchived(true)
+    try {
+      console.log('📖 Buscando OSs arquivadas...')
+      const response = await fetch('/api/archived-os')
+      const data = await response.json()
+      
+      if (data.success) {
+        setArchivedOrders(data.orders)
+        console.log(`✅ ${data.orders.length} OSs arquivadas carregadas`)
+      } else {
+        console.error('❌ Erro ao buscar OSs arquivadas:', data.error)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar OSs arquivadas:', error)
+    } finally {
+      setIsLoadingArchived(false)
+    }
+  }
+
   // Função para marcar notificações como vistas
   const markNotificationsAsViewed = () => {
     const urgentOrderIds = workOrders
-      .filter(os => os.prioridade === 'urgente' && os.status !== 'Concluído')
+      .filter(os => os.prioridade === 'Alta' && os.status !== 'Concluído')
       .map(os => os.id);
     
     setViewedNotifications(prev => [...new Set([...prev, ...urgentOrderIds])]);
@@ -341,7 +408,7 @@ export function DesignaliCreative() {
           os.id === osId ? { ...os, status: newStatus, last_updated: new Date().toISOString() } : os
         ));
         
-        // Se concluiu uma OS urgente, remover das notificações vistas
+        // Se concluiu uma OS de alta prioridade, remover das notificações vistas
         if (newStatus === 'Concluído') {
           setViewedNotifications(prev => prev.filter(id => id !== osId));
         }
@@ -377,8 +444,97 @@ export function DesignaliCreative() {
     setShowEditModal(true)
   }
 
+  // Função para criar nova OS
+  const handleCreateNewOS = async () => {
+    setIsCreating(true)
+    try {
+      const response = await fetch('/api/os', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newOSForm),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ Nova OS criada:', result)
+        
+        // Limpar formulário
+        setNewOSForm({
+          solicitante: "",
+          setor: "",
+          data_solicitacao: "",
+          local: "",
+          prioridade: "Média",
+          tipo_manutencao: "Predial",
+          descricao: "",
+          responsavelSetor: "",
+          fotos: []
+        })
+        
+        // Fechar modal
+        setShowNewOSModal(false)
+        
+        // Recarregar OSs
+        await fetchWorkOrders()
+        
+        // Voltar para o dashboard
+        setActiveTab('home')
+        
+        // Mostrar notificação de sucesso
+        setToastMessage('✅ Ordem de Serviço criada com sucesso!')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+      } else {
+        console.error('❌ Erro ao criar OS:', response.statusText)
+        setToastMessage('❌ Erro ao criar Ordem de Serviço')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao criar OS:', error)
+      setToastMessage('❌ Erro ao criar Ordem de Serviço')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  // Função para sincronizar com Google Sheets
+  const handleSyncSheets = async () => {
+    setIsSyncing(true)
+    try {
+      const response = await fetch('/api/sync-sheets', { method: 'POST' })
+      const result = await response.json()
+
+      if (result.success) {
+        setToastMessage(`✅ ${result.totalOSs} OSs sincronizadas!`)
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 5000)
+        
+        if (result.spreadsheetUrl) {
+          window.open(result.spreadsheetUrl, '_blank')
+        }
+      } else {
+        setToastMessage(`❌ Erro: ${result.error}`)
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 5000)
+      }
+    } catch (error) {
+      console.error('❌ Erro:', error)
+      setToastMessage('❌ Erro ao sincronizar')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 5000)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
   // Função para salvar edição
   const handleSaveEdit = async () => {
+    setIsSaving(true)
     try {
       const response = await fetch('/api/os/update', {
         method: 'POST',
@@ -394,15 +550,26 @@ export function DesignaliCreative() {
       const result = await response.json()
 
       if (result.success) {
-        alert('OS atualizada com sucesso!')
         setShowEditModal(false)
         await fetchWorkOrders()
+        
+        // Notificação de sucesso
+        setToastMessage('✅ OS atualizada com sucesso!')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
       } else {
-        alert(`Erro ao atualizar OS: ${result.error}`)
+        // Notificação de erro
+        setToastMessage(`❌ Erro: ${result.error}`)
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
       }
     } catch (error) {
       console.error('Erro ao salvar edição:', error)
-      alert('Erro ao salvar edição')
+      setToastMessage('❌ Erro ao salvar edição')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -456,7 +623,7 @@ export function DesignaliCreative() {
               .label { font-weight: bold; }
               .value { margin-left: 10px; }
               .status { padding: 5px 10px; border-radius: 5px; color: white; }
-              .urgente { background-color: #dc2626; }
+              .alta { background-color: #dc2626; }
               .normal { background-color: #059669; }
               .em-andamento { background-color: #d97706; }
               .concluido { background-color: #059669; }
@@ -474,8 +641,8 @@ export function DesignaliCreative() {
             </div>
             
             <div class="field">
-              <span class="label">Equipamento:</span>
-              <span class="value">${selectedOS.equipamento || 'N/A'}</span>
+              <span class="label">Local/Equipamento:</span>
+              <span class="value">${selectedOS.local || selectedOS.equipamento || 'N/A'}</span>
             </div>
             
             <div class="field">
@@ -486,15 +653,23 @@ export function DesignaliCreative() {
             <div class="field">
               <span class="label">Prioridade:</span>
               <span class="value">
-                <span class="status ${(selectedOS.prioridade === 'urgente') ? 'urgente' : 'normal'}">
-                  ${(selectedOS.prioridade === 'urgente') ? 'URGENTE' : 'NORMAL'}
+                <span class="status ${(selectedOS.prioridade === 'Alta') ? 'alta' : 'normal'}">
+                  ${(selectedOS.prioridade === 'Alta') ? 'ALTA' : 'NORMAL'}
                 </span>
               </span>
             </div>
             
             <div class="field">
-              <span class="label">Data de Criação:</span>
-              <span class="value">${selectedOS.created_at ? new Date(selectedOS.created_at).toLocaleDateString('pt-BR') : 'N/A'}</span>
+              <span class="label">Data:</span>
+              <span class="value">${
+                selectedOS.data_solicitacao 
+                  ? selectedOS.data_solicitacao.split('T')[0].split('-').reverse().join('/') 
+                  : (selectedOS.data 
+                      ? selectedOS.data.split('T')[0].split('-').reverse().join('/') 
+                      : (selectedOS.created_at 
+                          ? new Date(selectedOS.created_at).toLocaleDateString('pt-BR') 
+                          : 'N/A'))
+              }</span>
             </div>
             
             <div class="field">
@@ -556,7 +731,7 @@ export function DesignaliCreative() {
 
     const completedOrders = monthOrders.filter(os => os.status === 'Concluído');
     const pendingOrders = monthOrders.filter(os => os.status !== 'Concluído');
-    const urgentOrders = monthOrders.filter(os => os.prioridade === 'urgente');
+    const urgentOrders = monthOrders.filter(os => os.prioridade === 'Alta');
 
     // Análise por tipo
     const typeAnalysis = monthOrders.reduce((acc, os) => {
@@ -585,7 +760,7 @@ ${monthName.toUpperCase()}
 Total de OSs: ${monthOrders.length}
 Concluídas: ${completedOrders.length}
 Em Andamento: ${pendingOrders.length}
-Urgentes: ${urgentOrders.length}
+Alta Prioridade: ${urgentOrders.length}
 
 📝 ANÁLISE DO PERÍODO
 Durante o mês de ${monthName}, foram registradas ${monthOrders.length} ordens de serviço.
@@ -600,7 +775,7 @@ ${Object.entries(sectorAnalysis).map(([sector, count]) => `• ${sector}: ${coun
 RECOMENDAÇÕES:
 ${monthOrders.length > 0 ? `
 • Foque na conclusão das ${pendingOrders.length} OSs pendentes
-• Priorize as ${urgentOrders.length} OSs urgentes
+• Priorize as ${urgentOrders.length} OSs de alta prioridade
 • Analise os padrões de manutenção por setor
 ` : '• Nenhuma atividade registrada no período'}
 ` : 'Nenhuma atividade registrada no período.'}
@@ -671,9 +846,23 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
     }
   }
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
-    setOsForm((prev) => ({ ...prev, fotos: [...prev.fotos, ...files] }))
+    
+    // Converter arquivos para Base64
+    const base64Files = await Promise.all(
+      files.map(async (file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            resolve(reader.result as string)
+          }
+          reader.readAsDataURL(file)
+        })
+      })
+    )
+    
+    setNewOSForm((prev) => ({ ...prev, fotos: [...prev.fotos, ...base64Files] }))
   }
 
   const handleSidebarClick = (key: string) => {
@@ -745,13 +934,6 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
 
           <div className="border-t p-3">
             <div className="space-y-1">
-              <button
-                onClick={() => handleSidebarClick("settings")}
-                className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium hover:bg-muted"
-              >
-                <Settings className="h-5 w-5" />
-                <span>Configurações</span>
-              </button>
               <button className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-sm font-medium hover:bg-muted">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-6 w-6">
@@ -821,13 +1003,6 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
 
           <div className="border-t p-3">
             <div className="space-y-1">
-              <button
-                onClick={() => handleSidebarClick("settings")}
-                className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium hover:bg-muted"
-              >
-                <Settings className="h-5 w-5" />
-                <span>Configurações</span>
-              </button>
               <button className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-sm font-medium hover:bg-muted">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-6 w-6">
@@ -870,7 +1045,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                   <Wrench className="h-4 w-4 text-white" />
                 </div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
-                  Cozil
+                  CozilTech
                 </h1>
               </motion.div>
               <span className="text-sm text-muted-foreground hidden sm:block">
@@ -918,13 +1093,13 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                     <div className="p-4 border-b">
                       <h3 className="font-semibold">Notificações</h3>
                       <p className="text-sm text-muted-foreground">
-                        {notifications} OSs urgentes aguardando atenção
+                        {notifications} OSs de alta prioridade aguardando atenção
                       </p>
                     </div>
                     
                     <div className="max-h-64 overflow-y-auto">
                       {workOrders
-                        .filter(os => os.prioridade === 'urgente' && os.status !== 'Concluído')
+                        .filter(os => os.prioridade === 'Alta' && os.status !== 'Concluído')
                         .slice(0, 5)
                         .map((os) => (
                           <motion.div
@@ -951,11 +1126,11 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                           </motion.div>
                         ))}
                       
-                      {workOrders.filter(os => os.prioridade === 'urgente' && os.status !== 'Concluído').length === 0 && (
+                      {workOrders.filter(os => os.prioridade === 'Alta' && os.status !== 'Concluído').length === 0 && (
                         <div className="p-6 text-center">
                           <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
                           <p className="text-sm text-muted-foreground">
-                            Nenhuma notificação urgente
+                            Nenhuma notificação de alta prioridade
                           </p>
                         </div>
                       )}
@@ -1034,6 +1209,13 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                 </TabsTrigger>
               </TabsList>
               <div className="hidden md:flex gap-2">
+                <Button
+                  className="rounded-2xl bg-primary text-white hover:bg-primary/90"
+                  onClick={() => setActiveTab("new-order")}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova OS
+                </Button>
                 <Button
                   variant="outline"
                   className="rounded-2xl bg-transparent"
@@ -1121,8 +1303,8 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-muted-foreground">Urgentes</p>
-                            <p className="text-2xl font-bold">{dashboardStats.urgentes}</p>
+                            <p className="text-sm text-muted-foreground">Alta Prioridade</p>
+                            <p className="text-2xl font-bold">{dashboardStats.altas}</p>
                           </div>
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100">
                             <AlertTriangle className="h-6 w-6 text-red-600" />
@@ -1135,50 +1317,81 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                   <section className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-semibold">Tipos de Manutenção</h2>
+                      {selectedMaintenanceType && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedMaintenanceType(null)}
+                          className="rounded-xl"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Limpar Filtro
+                        </Button>
+                      )}
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-                      {maintenanceTypes.map((type) => (
-                        <motion.div key={type.name} whileHover={{ scale: 1.02, y: -5 }} whileTap={{ scale: 0.98 }}>
-                          <Card className="overflow-hidden rounded-3xl border-2 hover:border-primary/50 transition-all duration-300">
-                            <CardHeader className="pb-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {maintenanceTypes.map((type) => {
+                        const typeCount = workOrders.filter((os: any) => os.tipo_manutencao === type.name).length
+                        const isSelected = selectedMaintenanceType === type.name
+                        return (
+                          <motion.div 
+                            key={type.name} 
+                            whileHover={{ scale: 1.02, y: -5 }} 
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Card 
+                              className={`overflow-hidden rounded-3xl border-2 cursor-pointer transition-all duration-300 ${
+                                isSelected 
+                                  ? 'border-primary bg-primary/5 shadow-lg' 
+                                  : 'hover:border-primary/50'
+                              }`}
+                              onClick={() => setSelectedMaintenanceType(isSelected ? null : type.name)}
+                            >
+                              <CardContent className="p-6">
                               <div className="flex items-center justify-between">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                                  <div className="flex items-center gap-4">
+                                    <div className={`rounded-2xl p-4 ${isSelected ? 'bg-primary/10' : 'bg-muted'}`}>
                                   {type.icon}
                                 </div>
-                                {type.urgent > 0 && (
-                                  <Badge className="rounded-xl bg-red-500">
-                                    {type.urgent} Urgente{type.urgent > 1 ? "s" : ""}
-                                  </Badge>
-                                )}
+                                    <div>
+                                      <h3 className="text-xl font-bold">{type.name}</h3>
+                                      <p className="text-sm text-muted-foreground">{type.description}</p>
                               </div>
-                            </CardHeader>
-                            <CardContent className="pb-2">
-                              <CardTitle className="text-lg">{type.name}</CardTitle>
-                              <CardDescription>{type.description}</CardDescription>
-                              {type.count > 0 && (
-                                <p className="text-sm text-muted-foreground mt-2">
-                                  {type.count} OS ativas
-                                </p>
-                              )}
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-3xl font-bold text-primary">{typeCount}</p>
+                                    <p className="text-xs text-muted-foreground">OSs</p>
+                                  </div>
+                                </div>
                             </CardContent>
                           </Card>
                         </motion.div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </section>
 
                   <section className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-semibold">Ordens de Serviço Recentes</h2>
+                      <h2 className="text-2xl font-semibold">
+                        {selectedMaintenanceType 
+                          ? `OSs de ${selectedMaintenanceType}` 
+                          : 'Ordens de Serviço Recentes'}
+                      </h2>
                     </div>
                     <div className="rounded-3xl border">
                       {workOrders.length > 0 ? (
                       <div className="grid grid-cols-1 divide-y">
-                          {/* Mostrar 5 mais recentes + urgentes não concluídas */}
+                          {/* Filtrar por tipo de manutenção se selecionado */}
                           {workOrders
-                            .filter((os: any) => os.status !== 'Concluído')
+                            .filter((os: any) => {
+                              if (selectedMaintenanceType) {
+                                return os.tipo_manutencao === selectedMaintenanceType && os.status !== 'Concluído'
+                              }
+                              return os.status !== 'Concluído'
+                            })
                             .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                            .slice(0, 5)
+                            .slice(0, selectedMaintenanceType ? 10 : 5)
                             .map((order) => (
                           <motion.div
                             key={order.id}
@@ -1209,17 +1422,19 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                               </div>
                             </div>
                                   
-                                  <p className="font-medium text-lg text-foreground truncate mb-1">{order.equipamento}</p>
+                                  <p className="font-medium text-lg text-foreground truncate mb-1">
+                                    {order.local || order.equipamento || order.setor || 'Sem título'}
+                                  </p>
                                   
                                   <div className="flex items-center justify-between">
                                     <p className="text-sm text-muted-foreground truncate">
-                                      {order.setor} • {order.created ? new Date(order.created).toLocaleDateString('pt-BR') : (order.created_at ? new Date(order.created_at).toLocaleDateString('pt-BR') : 'N/A')}
+                                      {order.setor} • {formatDate(order.data_solicitacao || order.data || order.created_at)}
                                     </p>
                                     
                                     {/* Badge de Prioridade */}
-                                    {order.prioridade === 'urgente' && (
+                                    {order.prioridade === 'Alta' && (
                                       <Badge variant="destructive" className="text-xs px-2 py-0 h-5">
-                                        Urgente
+                                        Alta
                               </Badge>
                                     )}
                                   </div>
@@ -1320,7 +1535,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                             </SelectTrigger>
                             <SelectContent>
                                   <SelectItem value="all">Todas</SelectItem>
-                              <SelectItem value="urgente">Urgente</SelectItem>
+                              <SelectItem value="Alta">Alta</SelectItem>
                                   <SelectItem value="normal">Normal</SelectItem>
                             </SelectContent>
                           </Select>
@@ -1388,14 +1603,14 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                         </span>
                                         <Badge 
                                           className={`text-xs ${
-                                            os.prioridade === 'Alta' || os.prioridade === 'urgente'
+                                            os.prioridade === 'Alta'
                                               ? 'bg-red-100 text-red-700 border-red-200' 
                                               : os.prioridade === 'Média'
                                               ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
                                               : 'bg-green-100 text-green-700 border-green-200'
                                           }`}
                                         >
-                                          {os.prioridade === 'urgente' ? 'Urgente' : os.prioridade || 'Normal'}
+                                          {os.prioridade || 'Normal'}
                                         </Badge>
                                         <Badge variant="outline" className="text-xs">
                                           {os.status}
@@ -1403,9 +1618,9 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                       </div>
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                                         <div><strong>Setor:</strong> {os.setor}</div>
-                                        <div><strong>Equipamento:</strong> {os.equipamento}</div>
+                                        <div><strong>Local:</strong> {os.local || os.equipamento || 'N/A'}</div>
                                         <div><strong>Solicitante:</strong> {os.solicitante}</div>
-                                        <div><strong>Data:</strong> {os.data ? new Date(os.data).toLocaleDateString('pt-BR') : (os.created_at ? new Date(os.created_at).toLocaleDateString('pt-BR') : 'N/A')}</div>
+                                        <div><strong>Data:</strong> {formatDate(os.data_solicitacao || os.data || os.created_at)}</div>
                                       </div>
                                     </div>
                                     <div className="flex gap-2">
@@ -1465,14 +1680,14 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                         </span>
                                         <Badge 
                                           className={`text-xs ${
-                                            os.prioridade === 'Alta' || os.prioridade === 'urgente'
+                                            os.prioridade === 'Alta'
                                               ? 'bg-red-100 text-red-700 border-red-200' 
                                               : os.prioridade === 'Média'
                                               ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
                                               : 'bg-green-100 text-green-700 border-green-200'
                                           }`}
                                         >
-                                          {os.prioridade === 'urgente' ? 'Urgente' : os.prioridade || 'Normal'}
+                                          {os.prioridade || 'Normal'}
                                         </Badge>
                                         <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200">
                                           {os.status}
@@ -1480,9 +1695,9 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                               </div>
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                                         <div><strong>Setor:</strong> {os.setor}</div>
-                                        <div><strong>Equipamento:</strong> {os.equipamento}</div>
+                                        <div><strong>Local:</strong> {os.local || os.equipamento || 'N/A'}</div>
                                         <div><strong>Solicitante:</strong> {os.solicitante}</div>
-                                        <div><strong>Data:</strong> {os.data ? new Date(os.data).toLocaleDateString('pt-BR') : (os.created_at ? new Date(os.created_at).toLocaleDateString('pt-BR') : 'N/A')}</div>
+                                        <div><strong>Data:</strong> {formatDate(os.data_solicitacao || os.data || os.created_at)}</div>
                             </div>
                           </div>
                                     <div className="flex gap-2">
@@ -1511,6 +1726,234 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                           </div>
                         )}
                       </div>
+                    </motion.div>
+                  </section>
+                </TabsContent>
+
+                <TabsContent value="new-order" className="space-y-8 mt-0">
+                  <section>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="space-y-8"
+                    >
+                      {/* Header */}
+                      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <h2 className="text-3xl font-bold text-gray-900">Nova Ordem de Serviço</h2>
+                          <p className="text-gray-600 mt-2">Preencha os dados para criar uma nova OS</p>
+                        </div>
+                      </div>
+
+                      {/* Formulário */}
+                      <Card className="rounded-3xl">
+                        <CardContent className="p-6 md:p-8">
+                          <form onSubmit={(e) => { e.preventDefault(); handleCreateNewOS(); }} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Solicitante */}
+                              <div className="space-y-2">
+                                <Label htmlFor="solicitante" className="text-sm font-medium">
+                                  Solicitante *
+                                </Label>
+                                <Input
+                                  id="solicitante"
+                                  value={newOSForm.solicitante}
+                                  onChange={(e) => setNewOSForm({...newOSForm, solicitante: e.target.value})}
+                                  placeholder="Nome do solicitante"
+                                  className="rounded-xl"
+                                  required
+                                />
+                              </div>
+
+                              {/* Setor */}
+                              <div className="space-y-2">
+                                <Label htmlFor="setor" className="text-sm font-medium">
+                                  Setor *
+                                </Label>
+                                <Select 
+                                  value={newOSForm.setor} 
+                                  onValueChange={(value) => setNewOSForm({...newOSForm, setor: value})}
+                                >
+                                  <SelectTrigger className="rounded-xl">
+                                    <SelectValue placeholder="Selecione o setor" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Portaria">Portaria</SelectItem>
+                                    <SelectItem value="Recepção">Recepção</SelectItem>
+                                    <SelectItem value="RH">RH</SelectItem>
+                                    <SelectItem value="Comercial">Comercial</SelectItem>
+                                    <SelectItem value="Engenharia">Engenharia</SelectItem>
+                                    <SelectItem value="Controladoria">Controladoria</SelectItem>
+                                    <SelectItem value="Financeiro">Financeiro</SelectItem>
+                                    <SelectItem value="Diretoria">Diretoria</SelectItem>
+                                    <SelectItem value="Projetos">Projetos</SelectItem>
+                                    <SelectItem value="Acabamento">Acabamento</SelectItem>
+                                    <SelectItem value="Mobiliário">Mobiliário</SelectItem>
+                                    <SelectItem value="CPC">CPC</SelectItem>
+                                    <SelectItem value="Caldeiraria">Caldeiraria</SelectItem>
+                                    <SelectItem value="Recebimento">Recebimento</SelectItem>
+                                    <SelectItem value="Laboratório">Laboratório</SelectItem>
+                                    <SelectItem value="Desenvolvimento">Desenvolvimento</SelectItem>
+                                    <SelectItem value="Logística">Logística</SelectItem>
+                                    <SelectItem value="Show room">Show room</SelectItem>
+                                    <SelectItem value="Estacionamento 1">Estacionamento 1</SelectItem>
+                                    <SelectItem value="Estacionamento 2">Estacionamento 2</SelectItem>
+                                    <SelectItem value="Almoxarifado">Almoxarifado</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Data da Solicitação */}
+                              <div className="space-y-2">
+                                <Label htmlFor="data_solicitacao" className="text-sm font-medium">
+                                  Data da Solicitação *
+                                </Label>
+                                <Input
+                                  id="data_solicitacao"
+                                  type="date"
+                                  value={newOSForm.data_solicitacao}
+                                  onChange={(e) => setNewOSForm({...newOSForm, data_solicitacao: e.target.value})}
+                                  className="rounded-xl"
+                                  required
+                                />
+                              </div>
+
+                              {/* Local */}
+                              <div className="space-y-2">
+                                <Label htmlFor="local" className="text-sm font-medium">
+                                  Local *
+                                </Label>
+                                <Input
+                                  id="local"
+                                  value={newOSForm.local}
+                                  onChange={(e) => setNewOSForm({...newOSForm, local: e.target.value})}
+                                  placeholder="Local do problema"
+                                  className="rounded-xl"
+                                  required
+                                />
+                              </div>
+
+                              {/* Prioridade */}
+                              <div className="space-y-2">
+                                <Label htmlFor="prioridade" className="text-sm font-medium">
+                                  Prioridade *
+                                </Label>
+                                <Select 
+                                  value={newOSForm.prioridade} 
+                                  onValueChange={(value) => setNewOSForm({...newOSForm, prioridade: value})}
+                                >
+                                  <SelectTrigger className="rounded-xl">
+                                    <SelectValue placeholder="Selecione a prioridade" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Baixa">Baixa</SelectItem>
+                                    <SelectItem value="Média">Média</SelectItem>
+                                    <SelectItem value="Alta">Alta</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Tipo de Manutenção */}
+                              <div className="space-y-2">
+                                <Label htmlFor="tipo_manutencao" className="text-sm font-medium">
+                                  Tipo de Manutenção *
+                                </Label>
+                                <Select 
+                                  value={newOSForm.tipo_manutencao} 
+                                  onValueChange={(value) => setNewOSForm({...newOSForm, tipo_manutencao: value})}
+                                >
+                                  <SelectTrigger className="rounded-xl">
+                                    <SelectValue placeholder="Selecione o tipo" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Predial">Predial</SelectItem>
+                                    <SelectItem value="Mecânica">Mecânica</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {/* Descrição */}
+                            <div className="space-y-2">
+                              <Label htmlFor="descricao" className="text-sm font-medium">
+                                Descrição do Problema *
+                              </Label>
+                              <Textarea
+                                id="descricao"
+                                value={newOSForm.descricao}
+                                onChange={(e) => setNewOSForm({...newOSForm, descricao: e.target.value})}
+                                placeholder="Descreva detalhadamente o problema..."
+                                className="rounded-xl min-h-[120px]"
+                                required
+                              />
+                            </div>
+
+                            {/* Responsável pelo Setor */}
+                            <div className="space-y-2">
+                              <Label htmlFor="responsavelSetor" className="text-sm font-medium">
+                                Responsável pelo Setor
+                              </Label>
+                              <Input
+                                id="responsavelSetor"
+                                value={newOSForm.responsavelSetor}
+                                onChange={(e) => setNewOSForm({...newOSForm, responsavelSetor: e.target.value})}
+                                placeholder="Nome do responsável pelo setor"
+                                className="rounded-xl"
+                              />
+                            </div>
+
+                            {/* Upload de Imagem */}
+                            <div className="space-y-2">
+                              <Label htmlFor="fotos" className="text-sm font-medium">
+                                Fotos do Problema
+                              </Label>
+                              <Input
+                                id="fotos"
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleFileUpload}
+                                className="rounded-xl"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Você pode selecionar múltiplas imagens (JPG, PNG, etc.)
+                              </p>
+                            </div>
+
+                            {/* Botões */}
+                            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                              <Button 
+                                type="submit" 
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl py-3"
+                                size="lg"
+                                disabled={isCreating}
+                              >
+                                {isCreating ? (
+                                  <>
+                                    <div className="h-5 w-5 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    Criando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plus className="h-5 w-5 mr-2" />
+                                    Criar Ordem de Serviço
+                                  </>
+                                )}
+                              </Button>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                className="flex-1 rounded-xl py-3"
+                                onClick={() => setActiveTab("home")}
+                                disabled={isCreating}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </form>
+                        </CardContent>
+                      </Card>
                     </motion.div>
                   </section>
                 </TabsContent>
@@ -1826,22 +2269,95 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card className="rounded-3xl">
                       <CardHeader>
-                        <CardTitle>Usuários e Perfis</CardTitle>
-                        <CardDescription>Gerenciar solicitantes, técnicos e gestores</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                          <User className="h-5 w-5" />
+                          Sistema de Notificações
+                        </CardTitle>
+                        <CardDescription>Usuários cadastrados para receber emails de novas OSs</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="p-4 bg-green-50 border border-green-200 rounded-2xl">
+                            <p className="text-sm text-green-900">
+                              <strong>✅ Sistema Ativo</strong><br />
+                              Usuários cadastrados na tabela <code>users</code> do Supabase recebem automaticamente 
+                              emails detalhados sempre que uma nova OS é criada.
+                            </p>
+                          </div>
+                          
+                          <div className="text-sm text-muted-foreground space-y-2">
+                            <p><strong>Usuários configurados:</strong></p>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                                <Badge variant="outline" className="bg-green-100">✓</Badge>
+                                <span>Administrador (TI)</span>
+                              </div>
+                              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                                <Badge variant="outline" className="bg-green-100">✓</Badge>
+                                <span>Gerente (Manutenção)</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-muted-foreground pt-2 border-t">
+                            💡 Para adicionar mais usuários, insira-os na tabela <code>users</code> no Supabase
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-3xl">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Settings className="h-5 w-5" />
+                          Ações Rápidas
+                        </CardTitle>
+                        <CardDescription>Ferramentas e exportações</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between p-3 bg-muted rounded-2xl">
-                            <span>Solicitantes</span>
-                            <Badge variant="outline">0 usuários</Badge>
-                          </div>
-                          <div className="flex items-center justify-between p-3 bg-muted rounded-2xl">
-                            <span>Técnicos</span>
-                            <Badge variant="outline">0 usuários</Badge>
-                          </div>
-                          <div className="flex items-center justify-between p-3 bg-muted rounded-2xl">
-                            <span>Gestores</span>
-                            <Badge variant="outline">1 usuário</Badge>
+                          <Button 
+                            variant="outline" 
+                            className="w-full rounded-2xl justify-start bg-transparent"
+                            onClick={() => setShowEmailManager(true)}
+                          >
+                            📧 Enviar Relatório Mensal
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            className="w-full rounded-2xl justify-start bg-transparent"
+                            onClick={handleSyncSheets}
+                            disabled={isSyncing}
+                          >
+                            {isSyncing ? (
+                              <>
+                                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                Sincronizando...
+                              </>
+                            ) : (
+                              '📊 Exportar para Google Sheets'
+                            )}
+                          </Button>
+
+                          <div className="pt-3 border-t">
+                            <p className="text-xs text-muted-foreground mb-2">
+                              <strong>Informações do Sistema:</strong>
+                            </p>
+                            <div className="space-y-1 text-xs text-muted-foreground">
+                              <div className="flex justify-between">
+                                <span>Versão:</span>
+                                <span className="font-mono">1.0.0</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Banco de Dados:</span>
+                                <Badge variant="outline" className="text-xs bg-green-100">✓ Supabase</Badge>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Backup:</span>
+                                <Badge variant="outline" className="text-xs bg-green-100">✓ Google Sheets</Badge>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -1849,24 +2365,73 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
 
                     <Card className="rounded-3xl">
                       <CardHeader>
-                        <CardTitle>Configurações Gerais</CardTitle>
-                        <CardDescription>Configurações do sistema</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                          <Clock className="h-5 w-5" />
+                          🗄️ Histórico de OSs Arquivadas
+                        </CardTitle>
+                        <CardDescription>Visualizar OSs antigas arquivadas no Google Sheets</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-3">
-                          <Button variant="outline" className="w-full rounded-2xl justify-start bg-transparent">
-                            Backup de Dados
-                          </Button>
-                          <Button variant="outline" className="w-full rounded-2xl justify-start bg-transparent">
-                            Notificações
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="w-full rounded-2xl justify-start bg-transparent"
-                            onClick={() => setShowEmailManager(true)}
+                        <div className="space-y-4">
+                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+                            <p className="text-sm text-blue-900">
+                              <strong>Sistema de Arquivamento:</strong><br />
+                              Quando o sistema atinge 500 OSs, as 200 mais antigas são automaticamente arquivadas no Google Sheets. 
+                              Todas permanecem acessíveis aqui! 🛡️
+                            </p>
+                          </div>
+                          
+                          <Button
+                            className="w-full rounded-2xl justify-start"
+                            variant="outline"
+                            onClick={fetchArchivedOrders}
+                            disabled={isLoadingArchived}
                           >
-                            📧 Relatórios por Email
+                            {isLoadingArchived ? (
+                              <>
+                                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                Carregando...
+                              </>
+                            ) : (
+                              <>
+                                <Download className="h-4 w-4 mr-2" />
+                                Ver Histórico ({archivedOrders.length} OSs arquivadas)
+                              </>
+                            )}
                           </Button>
+
+                          {archivedOrders.length > 0 && (
+                            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                              <p className="text-sm font-semibold text-muted-foreground">
+                                Últimas OSs arquivadas:
+                              </p>
+                              {archivedOrders.slice(0, 5).map((os: any, index: number) => (
+                                <div 
+                                  key={`archived-preview-${index}`}
+                                  className="p-3 bg-muted/50 rounded-xl text-sm space-y-1 cursor-pointer hover:bg-muted transition-colors"
+                                  onClick={() => {
+                                    setSelectedOS(os);
+                                    setShowOSDetails(true);
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold">{os.numero_os}</span>
+                                    <Badge variant="outline" className="text-xs bg-blue-100">
+                                      📦 Arquivada
+                                    </Badge>
+                                  </div>
+                                  <div className="text-muted-foreground">
+                                    {os.setor} • {os.data_solicitacao}
+                                  </div>
+                                </div>
+                              ))}
+                              {archivedOrders.length > 5 && (
+                                <p className="text-xs text-center text-muted-foreground pt-2">
+                                  + {archivedOrders.length - 5} OSs arquivadas
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -1919,7 +2484,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Data</label>
-                  <p className="text-base">{selectedOS.data_solicitacao ? new Date(selectedOS.data_solicitacao).toLocaleDateString('pt-BR') : (selectedOS.data ? new Date(selectedOS.data).toLocaleDateString('pt-BR') : 'N/A')}</p>
+                  <p className="text-base">{formatDate(selectedOS.data_solicitacao || selectedOS.data || selectedOS.created_at)}</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Equipamento</label>
@@ -1931,8 +2496,8 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Prioridade</label>
-                  <Badge variant={selectedOS.prioridade === 'Alta' || selectedOS.prioridade === 'urgente' ? 'destructive' : selectedOS.prioridade === 'Média' ? 'secondary' : 'outline'}>
-                    {selectedOS.prioridade === 'urgente' ? 'Urgente' : selectedOS.prioridade || 'Normal'}
+                  <Badge variant={selectedOS.prioridade === 'Alta' ? 'destructive' : selectedOS.prioridade === 'Média' ? 'secondary' : 'outline'}>
+                    {selectedOS.prioridade || 'Normal'}
                   </Badge>
                 </div>
                 <div className="space-y-2">
@@ -1948,7 +2513,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Responsável pelo Setor</label>
-                <p className="text-base">{selectedOS.responsavelSetor || 'A definir'}</p>
+                <p className="text-base">{selectedOS.responsavel_setor || selectedOS.responsavelSetor || 'A definir'}</p>
               </div>
               
               <div className="space-y-2">
@@ -1958,18 +2523,47 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                 </div>
               </div>
               
-              {selectedOS.fotos && selectedOS.fotos.length > 0 && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Fotos Anexadas</label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {selectedOS.fotos.map((foto: any, index: number) => (
-                      <div key={index} className="bg-muted p-2 rounded-2xl text-center">
-                        <p className="text-xs">{foto.name || `Foto ${index + 1}`}</p>
+                  {selectedOS.fotos && selectedOS.fotos.length > 0 ? (
+                    selectedOS.fotos.map((foto: any, index: number) => {
+                      const isBase64 = typeof foto === 'string' && foto.startsWith('data:image')
+                      return (
+                        <div key={index} className="bg-muted p-2 rounded-2xl">
+                          {isBase64 ? (
+                            <img 
+                              src={foto} 
+                              alt={`Foto ${index + 1}`} 
+                              className="w-full h-32 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => setSelectedImage(foto)}
+                            />
+                          ) : (
+                            <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex flex-col items-center justify-center mb-2">
+                              <span className="text-4xl mb-2">📷</span>
+                              <span className="text-xs text-gray-600 font-medium">Imagem</span>
                       </div>
-                    ))}
+                          )}
+                          <p className="text-xs text-center truncate font-medium">
+                            {isBase64 ? `Foto ${index + 1}` : (foto.name || foto)}
+                          </p>
+                          <button 
+                            className="w-full mt-2 text-xs bg-primary text-white px-2 py-1 rounded-lg hover:bg-primary/90"
+                            onClick={() => isBase64 ? setSelectedImage(foto) : alert(`Arquivo: ${foto}`)}
+                          >
+                            {isBase64 ? 'Ver Imagem' : 'Ver Detalhes'}
+                          </button>
                   </div>
+                      )
+                    })
+                  ) : (
+                    <div className="col-span-full text-center text-muted-foreground py-6">
+                      <span className="text-4xl block mb-2">📷</span>
+                      <span className="text-sm">Nenhuma foto anexada</span>
                 </div>
               )}
+                </div>
+              </div>
               
               <div className="space-y-3 md:space-y-4 pt-3 md:pt-4 border-t">
                 {/* Ações de Status */}
@@ -2080,7 +2674,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
 
               const completedOrders = monthOrders.filter(os => os.status === 'Concluído');
               const pendingOrders = monthOrders.filter(os => os.status !== 'Concluído');
-              const urgentOrders = monthOrders.filter(os => os.prioridade === 'urgente');
+              const urgentOrders = monthOrders.filter(os => os.prioridade === 'Alta');
 
               // Análise por tipo
               const typeAnalysis = monthOrders.reduce((acc, os) => {
@@ -2115,7 +2709,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-purple-700">{urgentOrders.length}</div>
-                        <div className="text-sm text-purple-600">Urgentes</div>
+                        <div className="text-sm text-purple-600">Alta Prioridade</div>
                       </div>
                     </div>
                   </div>
@@ -2141,7 +2735,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
 
                           {urgentOrders.length > 0 && (
                             <p className="text-orange-700 font-medium">
-                              ⚠️ Atenção: {urgentOrders.length} OSs foram marcadas como urgentes, 
+                              ⚠️ Atenção: {urgentOrders.length} OSs foram marcadas como alta prioridade, 
                               representando {Math.round((urgentOrders.length / monthOrders.length) * 100)}% do total.
                             </p>
                           )}
@@ -2225,7 +2819,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                           {urgentOrders.length > monthOrders.length * 0.3 && (
                             <div className="flex gap-2">
                               <span className="text-red-600">🚨</span>
-                              <span className="text-blue-700">Alto volume de OSs urgentes. Revisar processos preventivos.</span>
+                              <span className="text-blue-700">Alto volume de OSs de alta prioridade. Revisar processos preventivos.</span>
                             </div>
                           )}
                           
@@ -2335,7 +2929,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="urgente">Urgente</SelectItem>
+                      <SelectItem value="Alta">Alta</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -2384,13 +2978,22 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                 <Button
                   onClick={handleSaveEdit}
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                  disabled={isSaving}
                 >
-                  Salvar Alterações
+                  {isSaving ? (
+                    <>
+                      <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Salvando...
+                    </>
+                  ) : (
+                    'Salvar Alterações'
+                  )}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowEditModal(false)}
                   className="flex-1 rounded-xl"
+                  disabled={isSaving}
                 >
                   Cancelar
                 </Button>
@@ -2425,6 +3028,60 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
             <EmailReportManager onClose={() => setShowEmailManager(false)} />
           </motion.div>
         </div>
+      )}
+
+      {/* Modal de Visualização de Imagem */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-sm transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Visualização" 
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Toast de Notificação */}
+      {showToast && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className="fixed bottom-6 right-6 z-[101] bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 min-w-[300px] border border-gray-200 dark:border-gray-700"
+        >
+          <div className="flex items-center gap-3">
+            {toastMessage.includes('✅') ? (
+              <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+            ) : (
+              <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+              </div>
+            )}
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {toastMessage.replace('✅ ', '').replace('❌ ', '')}
+            </p>
+            <button
+              onClick={() => setShowToast(false)}
+              className="ml-auto flex-shrink-0 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </motion.div>
       )}
     </div>
   )

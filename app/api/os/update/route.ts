@@ -58,6 +58,21 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ OS atualizada com sucesso:', updated)
+    
+    // 🔄 Sincronizar automaticamente com Google Sheets
+    try {
+      console.log('📊 Sincronizando com Google Sheets...')
+      const syncResponse = await fetch(`${request.nextUrl.origin}/api/sync-sheets`, {
+        method: 'POST',
+      })
+      
+      if (syncResponse.ok) {
+        console.log('✅ Google Sheets sincronizado')
+      }
+    } catch (syncError) {
+      console.error('⚠️ Erro ao sincronizar Sheets:', syncError)
+    }
+    
     return NextResponse.json({ success: true, os: updated })
   } catch (error: any) {
     return NextResponse.json({ error: 'Erro interno do servidor', details: error.message }, { status: 500 })

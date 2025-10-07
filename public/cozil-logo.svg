@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Fundo circular vermelho -->
+  <circle cx="100" cy="100" r="95" fill="#dc2626" opacity="0.1"/>
+  
+  <!-- Engrenagem principal -->
+  <g transform="translate(100, 100)">
+    <!-- Engrenagem externa -->
+    <path d="M 0,-45 L 5,-35 L 10,-45 L 15,-35 L 20,-45 L 25,-35 L 30,-45 L 35,-35 A 45 45 0 0 1 35,35 L 30,45 L 35,35 L 25,35 L 20,45 L 15,35 L 10,45 L 5,35 L 0,45 A 45 45 0 0 1 -35,35 L -30,45 L -35,35 L -25,35 L -20,45 L -15,35 L -10,45 L -5,35 L 0,45 A 45 45 0 0 1 0,-45" 
+          fill="#dc2626" stroke="#b91c1c" stroke-width="2"/>
+    
+    <!-- Círculo interno -->
+    <circle cx="0" cy="0" r="20" fill="#ffffff" stroke="#dc2626" stroke-width="3"/>
+    
+    <!-- Letra C no centro -->
+    <text x="0" y="10" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#dc2626" text-anchor="middle">C</text>
+  </g>
+  
+  <!-- Chave inglesa -->
+  <g transform="translate(140, 60) rotate(45)">
+    <rect x="-3" y="0" width="6" height="30" fill="#dc2626" rx="2"/>
+    <circle cx="0" cy="30" r="8" fill="none" stroke="#dc2626" stroke-width="3"/>
+  </g>
+  
+  <!-- Texto COZIL -->
+  <text x="100" y="170" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#dc2626" text-anchor="middle">COZIL</text>
+  <text x="100" y="188" font-family="Arial, sans-serif" font-size="10" font-weight="normal" fill="#6b7280" text-anchor="middle">MANUTENÇÃO INTELIGENTE</text>
+</svg>
+

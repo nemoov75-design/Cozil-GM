@@ -1,11 +1,11 @@
-# Cozil - Sistema de Manutenção
+# CozilTech - Sistema Inteligente de Manutenção
 
 Sistema completo de gerenciamento de ordens de serviço e manutenção desenvolvido com Next.js, TypeScript e Supabase.
 
 ## 🚀 Funcionalidades
 
 - **Sistema de Autenticação** com NextAuth.js
-- **Integração com Google Forms** para recebimento de solicitações
+- **Criação de Ordens de Serviço** diretamente no sistema
 - **Banco de dados Supabase** para armazenamento
 - **Interface moderna** com componentes UI
 - **Sistema de notificações** por email
@@ -42,14 +42,15 @@ NEXTAUTH_URL=http://localhost:3000
 npm run dev
 ```
 
-## 🔧 Integração Google Forms
+## 🔧 Criação de Ordens de Serviço
 
-O sistema está configurado para receber dados do Google Forms em tempo real através de webhooks.
+O sistema permite criar ordens de serviço diretamente na interface, com formulário completo e validação.
 
-### Configuração:
-1. Execute o script SQL no Supabase (`supabase-schema.sql`)
-2. Configure o Google Apps Script (`google-forms-script.js`)
-3. Configure o trigger no Google Forms
+### Funcionalidades:
+1. **Formulário Intuitivo** - Interface amigável para criação de OSs
+2. **Validação de Dados** - Campos obrigatórios e validação automática
+3. **Upload de Imagens** - Anexar fotos dos problemas
+4. **Gestão Completa** - Acompanhamento do status das OSs
 
 ## 📱 Deploy
 

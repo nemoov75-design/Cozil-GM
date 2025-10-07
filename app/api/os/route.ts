@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { checkAndArchiveOldOS } from '@/lib/google-sheets'
 
 // Interface para os dados da OS
 interface OSData {
@@ -23,33 +24,80 @@ function generateOSNumber(): string {
   return `OS-${year}${month}${day}-${random}`
 }
 
-// POST - Receber dados do Google Forms
+// POST - Receber dados do formulário
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    console.log('📥 Dados recebidos:', JSON.stringify(body, null, 2))
+    // Verificar se é FormData ou JSON pelo Content-Type
+    const contentType = request.headers.get('content-type')
+    console.log('📥 Content-Type recebido:', contentType)
+    let body: any = {}
+    
+    // Se é JSON (com imagens Base64)
+    if (contentType?.includes('application/json')) {
+      console.log('📥 JSON recebido (provavelmente com Base64)')
+      body = await request.json()
+      console.log('📷 Fotos Base64 recebidas:', body.fotos?.length || 0)
+    } 
+    // Se é FormData (legado - só nomes de arquivo)
+    else {
+      console.log('📥 FormData recebido')
+      const formData = await request.formData()
+      
+      // Extrair campos do FormData
+      body = {
+        solicitante: formData.get('solicitante') as string,
+        setor: formData.get('setor') as string,
+        data_solicitacao: formData.get('data_solicitacao') as string,
+        local: formData.get('local') as string,
+        prioridade: formData.get('prioridade') as string,
+        tipo_manutencao: formData.get('tipo_manutencao') as string,
+        descricao: formData.get('descricao') as string,
+        responsavelSetor: formData.get('responsavelSetor') as string,
+        fotos: []
+      }
+      
+      // Processar fotos (apenas nomes)
+      const fotos: string[] = []
+      for (const [key, value] of formData.entries()) {
+        if (key.startsWith('foto_') && value instanceof File) {
+          console.log('📷 Foto encontrada:', key, value.name, value.size)
+          fotos.push(value.name)
+        }
+      }
+      body.fotos = fotos
+      console.log('📷 Total de fotos processadas:', fotos.length)
+    }
+    
+    // Log sem mostrar as imagens Base64 completas (muito grandes)
+    const bodyLog = { ...body }
+    if (bodyLog.fotos && Array.isArray(bodyLog.fotos)) {
+      bodyLog.fotos = bodyLog.fotos.map((f: string) => 
+        f.startsWith('data:image') ? `[Base64 Image: ${f.substring(0, 30)}...]` : f
+      )
+    }
+    console.log('📥 Dados recebidos:', JSON.stringify(bodyLog, null, 2))
     console.log('🔍 Debug responsavelSetor recebido:', body.responsavelSetor)
     
-    // Mapear os dados do Google Forms para nossa estrutura
-    const solicitante = body.solicitante || body['Solicitante'] || body['Nome do solicitante'] || 'Não informado';
+    // Mapear os dados do formulário para nossa estrutura
+    const solicitante = body.solicitante || 'Não informado';
     
     const osData: OSData = {
-      setor: body.setor || body['Setor'] || '',
-      data: body.data || body['Data da solicitação'] || body['Data'] || '',
-      equipamento: body.equipamento || body['Local'] || body['Equipamento'] || '',
-      tipoManutencao: body.tipoManutencao || body['Tipo de Manutenção'] || body['Tipo de manutencao'] || '',
-      prioridade: body.prioridade || body['Prioridade'] || '',
-      descricao: body.descricao || body['Descreva o serviço...'] || body['Descrição do problema'] || body['Descricao do problema'] || '',
+      setor: body.setor || '',
+      data: body.data_solicitacao || new Date().toISOString().split('T')[0],
+      equipamento: body.local || 'Não especificado',
+      tipoManutencao: body.tipo_manutencao || 'Predial',
+      prioridade: body.prioridade || 'Média',
+      descricao: body.descricao || '',
       solicitante: solicitante,
       responsavelSetor: body.responsavelSetor || solicitante || 'Não informado',
-      fotos: body.fotos || body['Upload de Foto do Problema'] || []
+      fotos: body.fotos || []
     }
 
     console.log('📋 Dados mapeados:', JSON.stringify(osData, null, 2))
 
-    // Validar campos obrigatórios
-    const requiredFields = ['setor', 'data', 'equipamento', 'tipoManutencao', 'prioridade', 'descricao', 'solicitante', 'responsavelSetor']
-    const missingFields = requiredFields.filter(field => !osData[field as keyof OSData])
+    // Validar campos obrigatórios (apenas os essenciais)
+    const requiredFields = ['setor', 'descricao', 'solicitante']
+    const missingFields = requiredFields.filter(field => !osData[field as keyof OSData] || osData[field as keyof OSData] === '')
     
     if (missingFields.length > 0) {
       console.log('❌ Campos obrigatórios faltando:', missingFields)
@@ -72,8 +120,6 @@ export async function POST(request: NextRequest) {
     
     const insertData = {
       setor: osData.setor.trim(),
-      data: osData.data,
-      equipamento: osData.equipamento.trim(),
       tipo_manutencao: osData.tipoManutencao,
       prioridade: osData.prioridade,
       descricao: osData.descricao.trim(),
@@ -81,40 +127,18 @@ export async function POST(request: NextRequest) {
       responsavel_setor: responsavelSetorValue.trim(),
       numero_os: generateOSNumber(),
       status: 'Em Andamento',
-      // Limpar campos extras que podem estar causando conflito
-      local: null,
-      portaria: false,
-      recepcao: false,
-      rh: false,
-      comercial: false,
-      engenharia: false,
-      controladoria: false,
-      financeiro: false,
-      diretoria: false,
-      projetos: false,
-      acabamento: false,
-      mobiliario: false,
-      cpc: false,
-      caldeiraria: false,
-      recebimento: false,
-      laboratorio: false,
-      desenvolvimento: false,
-      logistica: false,
-      show_room: false,
-      estacionamento_1: false,
-      estacionamento_2: false,
-      almoxarifado: false,
-      fotos: []
+      local: osData.equipamento.trim(),
+      data_solicitacao: osData.data,
+      fotos: osData.fotos || []
     }
 
     console.log('💾 Tentando inserir no Supabase:', JSON.stringify(insertData, null, 2))
 
-          // Verificar se já existe uma OS com o mesmo equipamento, setor e descrição nas últimas 10 minutos
+          // Verificar se já existe uma OS com o mesmo setor e descrição nas últimas 10 minutos
           const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
           const { data: existingOS, error: checkError } = await supabase
             .from('work_orders')
-            .select('id, numero_os, created_at, equipamento, setor, descricao')
-            .eq('equipamento', insertData.equipamento.trim())
+            .select('id, numero_os, created_at, setor, descricao')
             .eq('setor', insertData.setor.trim())
             .eq('descricao', insertData.descricao)
             .gte('created_at', tenMinutesAgo)
@@ -154,6 +178,59 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ Nova OS criada com sucesso:', newOS)
+
+    // 🗄️ VERIFICAR SE PRECISA ARQUIVAR OSs ANTIGAS (Sistema de Limite Inteligente)
+    try {
+      console.log('🔍 Verificando necessidade de arquivamento...')
+      const archiveResult = await checkAndArchiveOldOS()
+      
+      if (archiveResult.needsArchiving) {
+        console.log(`📦 Arquivadas ${archiveResult.archived} OSs antigas automaticamente!`)
+      } else {
+        console.log(`✅ Ainda não precisa arquivar (${archiveResult.count} OSs no Supabase)`)
+      }
+    } catch (archiveError) {
+      console.error('⚠️ Erro ao verificar arquivamento:', archiveError)
+      // Não retornar erro, pois a OS foi criada com sucesso
+    }
+
+    // Enviar notificação por e-mail para todos os usuários cadastrados
+    try {
+      console.log('📧 Enviando notificação de nova OS...')
+      const notificationResponse = await fetch(`${request.nextUrl.origin}/api/send-os-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ osId: newOS.id })
+      })
+      
+      if (notificationResponse.ok) {
+        console.log('✅ Notificações enviadas com sucesso')
+      } else {
+        console.error('⚠️ Erro ao enviar notificações, mas OS foi criada')
+      }
+    } catch (notifError) {
+      console.error('⚠️ Erro ao enviar notificações:', notifError)
+      // Não retornar erro, pois a OS foi criada com sucesso
+    }
+
+    // 🔄 Sincronizar automaticamente com Google Sheets
+    try {
+      console.log('📊 Sincronizando com Google Sheets...')
+      const syncResponse = await fetch(`${request.nextUrl.origin}/api/sync-sheets`, {
+        method: 'POST',
+      })
+      
+      if (syncResponse.ok) {
+        console.log('✅ Google Sheets sincronizado')
+      } else {
+        console.error('⚠️ Erro ao sincronizar Sheets, mas OS foi criada')
+      }
+    } catch (syncError) {
+      console.error('⚠️ Erro ao sincronizar Sheets:', syncError)
+      // Não retornar erro, pois a OS foi criada com sucesso
+    }
 
     return NextResponse.json({
       success: true,

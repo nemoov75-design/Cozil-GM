@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import * as brevo from '@getbrevo/brevo'
 
-// Configuração do email (usando Gmail como exemplo)
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER, // Seu email
-    pass: process.env.EMAIL_PASS  // Sua senha de app
-  }
-})
+// Configuração do Brevo (300 e-mails/dia GRÁTIS!)
+const apiInstance = new brevo.TransactionalEmailsApi()
+apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY || '')
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,8 +11,8 @@ export async function POST(request: NextRequest) {
     
     // Buscar usuários cadastrados (simulando - em produção viria do banco)
     const users = [
-      { email: 'usuario1@exemplo.com', name: 'João Silva' },
-      { email: 'usuario2@exemplo.com', name: 'Maria Santos' }
+      { email: 'nemoov75@gmail.com', name: 'Gustavo' },
+      { email: 'gustavohenrique010100@gmail.com', name: 'Gustavo Henrique' }
     ]
     
     const currentMonth = new Date().toLocaleDateString('pt-BR', { 
@@ -30,23 +25,23 @@ export async function POST(request: NextRequest) {
       totalOSs: 45,
       concluidas: 38,
       pendentes: 7,
-      urgentes: 3,
+      altas: 3, // Alta prioridade
       eficiencia: 84.4
     }
     
     // Enviar para cada usuário
     const emailPromises = users.map(async (user) => {
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: user.email,
-        subject: `📊 Relatório Mensal - ${currentMonth} | Sistema Cozil`,
-        html: `
+      const sendSmtpEmail = new brevo.SendSmtpEmail()
+      sendSmtpEmail.sender = { email: 'nemoov75@gmail.com', name: 'CozilTech' }
+      sendSmtpEmail.to = [{ email: user.email, name: user.name }]
+      sendSmtpEmail.subject = `📊 Relatório Mensal - ${currentMonth} | CozilTech`
+      sendSmtpEmail.htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 20px;">
             <div style="background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
               
               <!-- Cabeçalho -->
               <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #dc2626; margin: 0; font-size: 28px;">🔧 Sistema Cozil</h1>
+                <h1 style="color: #dc2626; margin: 0; font-size: 28px;">🔧 CozilTech</h1>
                 <h2 style="color: #374151; margin: 10px 0; font-size: 20px;">Relatório Mensal - ${currentMonth}</h2>
                 <p style="color: #6b7280; margin: 0;">Olá, ${user.name}!</p>
               </div>
@@ -61,7 +56,7 @@ export async function POST(request: NextRequest) {
                   </div>
                   <div>
                     <p style="margin: 5px 0; color: #374151;"><strong>Pendentes:</strong> ${reportData.pendentes}</p>
-                    <p style="margin: 5px 0; color: #374151;"><strong>Urgentes:</strong> ${reportData.urgentes}</p>
+                    <p style="margin: 5px 0; color: #374151;"><strong>Alta Prioridade:</strong> ${reportData.altas}</p>
                   </div>
                 </div>
                 <div style="text-align: center; margin-top: 15px;">
@@ -76,7 +71,7 @@ export async function POST(request: NextRequest) {
                 <h3 style="color: #374151; margin: 0 0 15px 0;">📊 Análise de Performance</h3>
                 <div style="background: #f9fafb; padding: 15px; border-radius: 5px;">
                   <p style="margin: 5px 0; color: #374151;">• Taxa de conclusão: <strong>${((reportData.concluidas/reportData.totalOSs)*100).toFixed(1)}%</strong></p>
-                  <p style="margin: 5px 0; color: #374151;">• OSs urgentes: <strong>${reportData.urgentes} (${((reportData.urgentes/reportData.totalOSs)*100).toFixed(1)}%)</strong></p>
+                  <p style="margin: 5px 0; color: #374151;">• OSs de alta prioridade: <strong>${reportData.altas} (${((reportData.altas/reportData.totalOSs)*100).toFixed(1)}%)</strong></p>
                   <p style="margin: 5px 0; color: #374151;">• Performance geral: <strong>${reportData.eficiencia > 80 ? 'Excelente' : reportData.eficiencia > 60 ? 'Boa' : 'Necessita atenção'}</strong></p>
                 </div>
               </div>
@@ -95,26 +90,25 @@ export async function POST(request: NextRequest) {
               <!-- Rodapé -->
               <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                 <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                  Este relatório foi gerado automaticamente pelo Sistema Cozil.<br>
+                  Este relatório foi gerado automaticamente pelo CozilTech.<br>
                   Para mais informações, acesse o sistema.
                 </p>
                 <p style="color: #dc2626; margin: 10px 0 0 0; font-weight: bold;">
-                  © 2025 Cozil - Sistema de Gestão de Manutenção
+                  © 2025 CozilTech - Sistema de Gestão de Manutenção
                 </p>
               </div>
               
             </div>
           </div>
         `
-      }
       
       try {
-        await transporter.sendMail(mailOptions)
+        const result = await apiInstance.sendTransacEmail(sendSmtpEmail)
         console.log(`✅ Email enviado para: ${user.email}`)
-        return { success: true, email: user.email }
-      } catch (error) {
+        return { success: true, email: user.email, id: result.response?.body?.messageId }
+      } catch (error: any) {
         console.error(`❌ Erro ao enviar para ${user.email}:`, error)
-        return { success: false, email: user.email, error: error.message }
+        return { success: false, email: user.email, error: error.message || 'Erro desconhecido' }
       }
     })
     
