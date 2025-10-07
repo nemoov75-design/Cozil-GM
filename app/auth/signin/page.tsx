@@ -9,31 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { User, Lock, AlertCircle } from "lucide-react"
 
-// Usuários cadastrados (mesmos do NextAuth)
-const users = [
-  {
-    id: '1',
-    email: 'admin@cozil.com',
-    password: 'admin123',
-    name: 'Administrador Cozil',
-    role: 'admin'
-  },
-  {
-    id: '2', 
-    email: 'tecnico@cozil.com',
-    password: 'tecnico123',
-    name: 'Técnico Cozil',
-    role: 'tecnico'
-  },
-  {
-    id: '3',
-    email: 'gestor@cozil.com', 
-    password: 'gestor123',
-    name: 'Gestor Cozil',
-    role: 'gestor'
-  }
-]
-
 export default function SignIn() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -47,10 +22,14 @@ export default function SignIn() {
     setError("")
 
     try {
-      // Verificar credenciais
-      const user = users.find(u => 
+      // Buscar usuário no Supabase
+      const response = await fetch('/api/users')
+      const { users } = await response.json()
+      
+      // Verificar se o usuário existe e está ativo
+      const user = users.find((u: any) => 
         u.email === email && 
-        u.password === password
+        u.active === true
       )
 
       if (user) {
@@ -59,7 +38,9 @@ export default function SignIn() {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: user.cargo || 'user',
+          setor: user.setor,
+          telefone: user.telefone,
           image: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=ef4444&color=fff`
         }
         
@@ -69,10 +50,11 @@ export default function SignIn() {
         router.push("/")
         router.refresh()
       } else {
-        setError("Email ou senha incorretos")
+        setError("Email não encontrado ou usuário inativo")
       }
     } catch (error) {
       setError("Erro ao fazer login. Tente novamente.")
+      console.error('Erro no login:', error)
     } finally {
       setIsLoading(false)
     }
@@ -134,13 +116,12 @@ export default function SignIn() {
             </Button>
           </form>
           
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-semibold text-sm text-gray-700 mb-2">Credenciais de Teste:</h4>
-            <div className="space-y-1 text-xs text-gray-600">
-              <div><strong>Admin:</strong> admin@cozil.com / admin123</div>
-              <div><strong>Técnico:</strong> tecnico@cozil.com / tecnico123</div>
-              <div><strong>Gestor:</strong> gestor@cozil.com / gestor123</div>
-            </div>
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-sm text-blue-800 mb-2">ℹ️ Informação</h4>
+            <p className="text-xs text-blue-700">
+              Use o email cadastrado no sistema para fazer login. 
+              Entre em contato com o administrador se precisar de acesso.
+            </p>
           </div>
         </CardContent>
       </Card>
