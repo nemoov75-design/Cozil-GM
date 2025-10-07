@@ -455,11 +455,20 @@ export function DesignaliCreative() {
       prioridade = 'Média'
     }
     
+    // Normalizar tipo_manutencao para o formato correto
+    let tipoManutencao = osToEdit.tipo_manutencao || osToEdit.tipoManutencao || 'Predial'
+    if (tipoManutencao.toLowerCase().includes('mec') || tipoManutencao.toLowerCase().includes('mec')) {
+      tipoManutencao = 'Mecânica'
+    } else {
+      // Qualquer outro tipo vira Predial (elétrica, tubulação, etc)
+      tipoManutencao = 'Predial'
+    }
+    
     setSelectedOS(osToEdit)
     setEditForm({
       setor: osToEdit.setor || '',
       equipamento: osToEdit.equipamento || '',
-      tipo_manutencao: osToEdit.tipo_manutencao || osToEdit.tipoManutencao || '',
+      tipo_manutencao: tipoManutencao,
       prioridade: prioridade,
       descricao: osToEdit.descricao || '',
       solicitante: osToEdit.solicitante || '',
@@ -2961,16 +2970,8 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="elétrica">Elétrica</SelectItem>
-                      <SelectItem value="mecânica">Mecânica</SelectItem>
-                      <SelectItem value="predial">Predial</SelectItem>
-                      <SelectItem value="tubulação">Tubulação</SelectItem>
-                      <SelectItem value="escritório">Escritório</SelectItem>
-                      <SelectItem value="melhoria">Melhoria</SelectItem>
-                      <SelectItem value="projetos">Projetos</SelectItem>
-                      <SelectItem value="corretiva">Corretiva</SelectItem>
-                      <SelectItem value="preventiva">Preventiva</SelectItem>
-                      <SelectItem value="preditiva">Preditiva</SelectItem>
+                      <SelectItem value="Predial">Predial</SelectItem>
+                      <SelectItem value="Mecânica">Mecânica</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
