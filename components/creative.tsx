@@ -438,13 +438,27 @@ export function DesignaliCreative() {
           os.id === osId ? { ...os, status: newStatus, last_updated: new Date().toISOString() } : os
         ));
         
+        // 🔔 DEBUG: Testar notificação ao concluir
+        console.log('🔔 TESTE: Status atualizado para:', newStatus)
+        
         // 🔔 Enviar notificação se foi concluída
         if (newStatus === 'Concluído' && selectedOS) {
-          notifyOSCompleted(selectedOS.numero_os || 'OS')
+          console.log('🎉 Enviando notificação de OS concluída...')
+          try {
+            await notifyOSCompleted(selectedOS.numero_os || 'OS')
+            console.log('✅ Notificação de conclusão enviada!')
+          } catch (error) {
+            console.error('❌ Erro ao enviar notificação de conclusão:', error)
+          }
           setViewedNotifications(prev => prev.filter(id => id !== osId));
         } else if (selectedOS) {
-          // Notificação de atualização para outros status
-          notifyOSUpdated(selectedOS.numero_os || 'OS', newStatus)
+          console.log('📝 Enviando notificação de atualização...')
+          try {
+            await notifyOSUpdated(selectedOS.numero_os || 'OS', newStatus)
+            console.log('✅ Notificação de atualização enviada!')
+          } catch (error) {
+            console.error('❌ Erro ao enviar notificação de atualização:', error)
+          }
         }
         
         // Fechar modal
@@ -526,21 +540,39 @@ export function DesignaliCreative() {
         const result = await response.json()
         console.log('✅ Nova OS criada:', result)
         
+        // 🔔 DEBUG: Testar notificação imediatamente
+        console.log('🔔 TESTE: Tentando enviar notificação...')
+        
+        try {
+          // Teste simples primeiro
+          const testNotification = new Notification('🚨 TESTE NOTIFICAÇÃO!', {
+            body: 'Se você está vendo isso, as notificações funcionam!',
+            icon: '/icon-192x192.png',
+            requireInteraction: true
+          })
+          console.log('✅ Notificação de teste criada!')
+        } catch (error) {
+          console.error('❌ Erro ao criar notificação de teste:', error)
+        }
+        
         // 🔔 Enviar notificação push inteligente baseada na prioridade
         if (result.os && result.os.numero_os) {
           const prioridade = newOSForm.prioridade || 'Média'
           const setor = newOSForm.setor || 'Não informado'
           const solicitante = newOSForm.solicitante || 'Não informado'
           
+          console.log('🔔 Dados para notificação:', { prioridade, setor, solicitante })
+          
           // Notificação especial para OS de ALTA prioridade
           if (prioridade === 'Alta') {
+            console.log('🚨 Enviando notificação URGENTE...')
             await notifyUrgentOS(
               result.os.numero_os,
               solicitante,
               setor
             )
           } else {
-            // Notificação normal
+            console.log('📋 Enviando notificação normal...')
             await notifyNewOS(
               result.os.numero_os,
               solicitante,
@@ -548,7 +580,7 @@ export function DesignaliCreative() {
             )
           }
         } else {
-          // Fallback se não tiver numero_os
+          console.log('⚠️ Fallback: Enviando notificação sem número da OS')
           await notifyNewOS(
             'Nova OS',
             newOSForm.solicitante || 'Não informado',
