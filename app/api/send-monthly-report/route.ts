@@ -9,24 +9,34 @@ export async function POST(request: NextRequest) {
   try {
     console.log('📧 Iniciando envio de relatório mensal...')
     
-    // Buscar usuários cadastrados (simulando - em produção viria do banco)
-    const users = [
-      { email: 'nemoov75@gmail.com', name: 'Gustavo' },
-      { email: 'gustavohenrique010100@gmail.com', name: 'Gustavo Henrique' }
-    ]
+    // Buscar usuários cadastrados do banco
+    const usersResponse = await fetch(`${request.nextUrl.origin}/api/users`)
+    const usersData = await usersResponse.json()
+    const users = usersData.users || []
     
     const currentMonth = new Date().toLocaleDateString('pt-BR', { 
       month: 'long', 
       year: 'numeric' 
     })
     
-    // Gerar dados do relatório (simulando)
+    // Buscar dados reais do banco
+    const workOrdersResponse = await fetch(`${request.nextUrl.origin}/api/os`)
+    const workOrdersData = await workOrdersResponse.json()
+    const workOrders = workOrdersData.workOrders || []
+    
+    // Calcular dados reais do relatório
+    const totalOSs = workOrders.length
+    const concluidas = workOrders.filter((os: any) => os.status === 'Concluído').length
+    const pendentes = workOrders.filter((os: any) => os.status !== 'Concluído').length
+    const altas = workOrders.filter((os: any) => os.prioridade === 'Alta').length
+    const eficiencia = totalOSs > 0 ? ((concluidas / totalOSs) * 100).toFixed(1) : 0
+    
     const reportData = {
-      totalOSs: 45,
-      concluidas: 38,
-      pendentes: 7,
-      altas: 3, // Alta prioridade
-      eficiencia: 84.4
+      totalOSs,
+      concluidas,
+      pendentes,
+      altas,
+      eficiencia: parseFloat(eficiencia)
     }
     
     // Enviar para cada usuário

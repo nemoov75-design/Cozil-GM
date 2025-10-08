@@ -504,6 +504,42 @@ export function DesignaliCreative() {
           } catch (error) {
             console.error('❌ Erro ao enviar notificação de conclusão:', error)
           }
+          
+          // 🔥 Enviar notificação FCM ao concluir tarefa
+          try {
+            console.log('🔥 Enviando notificação FCM de OS concluída...')
+            
+            // Buscar todos os tokens FCM dos usuários
+            const tokensResponse = await fetch('/api/fcm-tokens')
+            if (tokensResponse.ok) {
+              const tokensData = await tokensResponse.json()
+              const tokens = tokensData.tokens.map((t: any) => t.token)
+              
+              if (tokens.length > 0) {
+                // Enviar notificação FCM
+                const fcmResponse = await fetch('/api/send-fcm-notification', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    os: { ...selectedOS, status: newStatus },
+                    tokens: tokens,
+                    type: 'completed'
+                  })
+                })
+                
+                if (fcmResponse.ok) {
+                  console.log('✅ Notificação FCM de conclusão enviada')
+                } else {
+                  console.error('❌ Erro ao enviar notificação FCM de conclusão')
+                }
+              }
+            }
+          } catch (fcmError) {
+            console.error('❌ Erro ao enviar notificação FCM:', fcmError)
+          }
+          
           setViewedNotifications(prev => prev.filter(id => id !== osId));
         } else if (selectedOS) {
           console.log('📝 Enviando notificação de atualização...')
