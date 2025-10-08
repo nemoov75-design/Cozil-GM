@@ -8,9 +8,9 @@ apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BR
 
 export async function POST(request: NextRequest) {
   try {
-    const { osId } = await request.json()
+    const { osId, type = 'new' } = await request.json()
     
-    console.log('📧 Enviando notificação de nova OS:', osId)
+    console.log('📧 Enviando notificação de OS:', { osId, type })
     
     // Buscar OS no banco
     const { data: os, error: osError } = await supabase
@@ -55,10 +55,15 @@ export async function POST(request: NextRequest) {
       const sendSmtpEmail = new brevo.SendSmtpEmail()
       sendSmtpEmail.sender = { email: 'nemoov75@gmail.com', name: 'CozilTech - Sistema de Manutenção' }
       sendSmtpEmail.to = [{ email: user.email, name: user.name }]
-      // Assunto mais chamativo baseado na prioridade
-      const assunto = os.prioridade === 'Alta' 
+    // Assunto baseado no tipo de notificação
+    let assunto = ''
+    if (type === 'completed') {
+      assunto = `✅ OS Concluída #${os.numero_os || os.id.substring(0, 8)} - ${os.prioridade} Prioridade`
+    } else {
+      assunto = os.prioridade === 'Alta' 
         ? `🚨🚨 URGENTE! Nova OS #${os.numero_os || os.id.substring(0, 8)} - ALTA PRIORIDADE!`
         : `🔔 Nova OS #${os.numero_os || os.id.substring(0, 8)} - ${os.prioridade} Prioridade`
+    }
       
       sendSmtpEmail.subject = assunto
       sendSmtpEmail.htmlContent = `
@@ -66,8 +71,8 @@ export async function POST(request: NextRequest) {
           <div style="background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
             
             <!-- Cabeçalho -->
-            <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 25px; border-radius: 10px;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">🔔 Nova Ordem de Serviço</h1>
+            <div style="text-align: center; margin-bottom: 30px; background: ${type === 'completed' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'}; padding: 25px; border-radius: 10px;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">${type === 'completed' ? '✅ OS Concluída' : '🔔 Nova Ordem de Serviço'}</h1>
               <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">CozilTech - Sistema de Manutenção</p>
             </div>
             
