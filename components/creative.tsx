@@ -221,8 +221,11 @@ export function DesignaliCreative() {
   useEffect(() => {
     const setupFCM = async () => {
       try {
+        console.log('🔥 Iniciando configuração FCM...')
+        
         // Solicitar permissão e obter token FCM
         const token = await requestFCMPermission()
+        console.log('🔑 Token FCM resultado:', token)
         
         if (token && user) {
           console.log('🔑 Token FCM obtido:', token)
@@ -235,6 +238,7 @@ export function DesignaliCreative() {
             timestamp: new Date().toISOString()
           }
           
+          console.log('💾 Salvando token FCM no banco...')
           const response = await fetch('/api/fcm-tokens', {
             method: 'POST',
             headers: {
@@ -250,8 +254,10 @@ export function DesignaliCreative() {
           if (response.ok) {
             console.log('✅ Token FCM salvo no banco de dados')
           } else {
-            console.error('❌ Erro ao salvar token FCM')
+            console.error('❌ Erro ao salvar token FCM:', await response.text())
           }
+        } else {
+          console.log('⚠️ Token FCM não obtido ou usuário não logado')
         }
         
         // Escutar mensagens em tempo real
@@ -266,7 +272,10 @@ export function DesignaliCreative() {
     }
     
     if (user) {
+      console.log('👤 Usuário logado, configurando FCM...')
       setupFCM()
+    } else {
+      console.log('⚠️ Usuário não logado, FCM não configurado')
     }
   }, [user])
 
