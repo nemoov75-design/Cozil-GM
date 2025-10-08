@@ -59,12 +59,12 @@ self.addEventListener('push', (event) => {
   console.log('🔔 Notificação Push recebida!')
   
   let notificationData = {
-    title: 'CozilTech',
-    body: 'Nova notificação',
+    title: '🚨 NOVA ORDEM DE SERVIÇO!',
+    body: '📋 Nova OS criada no sistema\n⚡ Clique para ver detalhes!',
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
     tag: 'coziltech-notification',
-    requireInteraction: false,
+    requireInteraction: true,
   }
 
   if (event.data) {
@@ -81,9 +81,19 @@ self.addEventListener('push', (event) => {
     badge: notificationData.badge || '/icon-192x192.png',
     tag: notificationData.tag || 'coziltech-notification',
     data: notificationData.data || {},
-    requireInteraction: notificationData.requireInteraction || false,
-    vibrate: [200, 100, 200], // Padrão de vibração
-    sound: '/notification-sound.mp3', // Som personalizado
+    requireInteraction: notificationData.requireInteraction || true,
+    vibrate: [300, 100, 300, 100, 300], // Vibração mais chamativa
+    actions: [
+      {
+        action: 'view',
+        title: '👀 Ver OS',
+        icon: '/icon-192x192.png'
+      },
+      {
+        action: 'close',
+        title: '❌ Fechar'
+      }
+    ]
   }
 
   event.waitUntil(

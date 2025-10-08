@@ -73,21 +73,25 @@ export async function sendLocalNotification(title: string, options?: Notificatio
   const defaultOptions: NotificationOptions = {
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
-    vibrate: [200, 100, 200],
-    requireInteraction: false,
+    vibrate: [300, 100, 300, 100, 300], // Vibração mais chamativa
+    requireInteraction: true, // Força interação
     ...options
   }
 
   try {
+    console.log('🔔 Criando notificação com título:', title)
+    console.log('🔔 Opções:', defaultOptions)
+    
     const notification = new Notification(title, defaultOptions)
     
     // Evento ao clicar na notificação
     notification.onclick = () => {
+      console.log('🖱️ Notificação clicada!')
       window.focus()
       notification.close()
     }
 
-    console.log('🔔 Notificação enviada:', title)
+    console.log('✅ Notificação criada com sucesso:', title)
     return notification
   } catch (error) {
     console.error('❌ Erro ao enviar notificação:', error)
@@ -97,27 +101,30 @@ export async function sendLocalNotification(title: string, options?: Notificatio
 
 // 📋 Notificação de nova OS criada
 export async function notifyNewOS(numeroOS: string, solicitante: string, setor: string) {
-  return sendLocalNotification('🆕 Nova Ordem de Serviço!', {
-    body: `OS #${numeroOS}\nSolicitante: ${solicitante}\nSetor: ${setor}`,
+  return sendLocalNotification('🚨 NOVA ORDEM DE SERVIÇO!', {
+    body: `📋 OS #${numeroOS}\n👤 Solicitante: ${solicitante}\n🏢 Setor: ${setor}\n\n⚡ Clique para ver detalhes!`,
     tag: `os-${numeroOS}`,
     icon: '/icon-512x512.png',
     requireInteraction: true,
+    vibrate: [300, 100, 300, 100, 300], // Vibração mais longa e chamativa
   })
 }
 
 // ✏️ Notificação de OS atualizada
 export async function notifyOSUpdated(numeroOS: string, status: string) {
-  return sendLocalNotification('✏️ OS Atualizada', {
-    body: `OS #${numeroOS}\nNovo status: ${status}`,
+  return sendLocalNotification('📝 ATUALIZAÇÃO IMPORTANTE!', {
+    body: `📋 OS #${numeroOS}\n🔄 Status: ${status}\n\n👀 Verifique as mudanças!`,
     tag: `os-${numeroOS}`,
+    vibrate: [200, 100, 200],
   })
 }
 
 // ✅ Notificação de OS concluída
 export async function notifyOSCompleted(numeroOS: string) {
-  return sendLocalNotification('✅ OS Concluída!', {
-    body: `A Ordem de Serviço #${numeroOS} foi concluída com sucesso.`,
+  return sendLocalNotification('🎉 MISSÃO CUMPRIDA!', {
+    body: `✅ OS #${numeroOS} CONCLUÍDA!\n🏆 Parabéns pelo trabalho!\n\n🎯 Nova missão pode estar chegando...`,
     tag: `os-${numeroOS}`,
+    vibrate: [200, 50, 200, 50, 200], // Vibração de comemoração
   })
 }
 
@@ -149,5 +156,44 @@ export function getNotificationStatus() {
     return 'not_supported'
   }
   return Notification.permission
+}
+
+// 🚨 Notificação de OS URGENTE (Alta prioridade)
+export async function notifyUrgentOS(numeroOS: string, solicitante: string, setor: string) {
+  return sendLocalNotification('🚨🚨 URGENTE! 🚨🚨', {
+    body: `🔥 OS #${numeroOS} - ALTA PRIORIDADE!\n👤 ${solicitante}\n🏢 ${setor}\n\n⚡ ATENÇÃO IMEDIATA NECESSÁRIA!`,
+    tag: `urgent-${numeroOS}`,
+    vibrate: [500, 200, 500, 200, 500], // Vibração URGENTE
+    requireInteraction: true,
+  })
+}
+
+// 📅 Notificação de OS atrasada
+export async function notifyOverdueOS(numeroOS: string, daysLate: number) {
+  return sendLocalNotification('⏰ OS ATRASADA!', {
+    body: `📋 OS #${numeroOS}\n⏰ ${daysLate} dias de atraso\n\n🚨 Ação necessária!`,
+    tag: `overdue-${numeroOS}`,
+    vibrate: [400, 100, 400, 100, 400],
+    requireInteraction: true,
+  })
+}
+
+// 🎯 Notificação de nova OS no seu setor
+export async function notifyNewOSInYourSector(numeroOS: string, setor: string) {
+  return sendLocalNotification('🎯 NOVA OS NO SEU SETOR!', {
+    body: `📋 OS #${numeroOS}\n🏢 Setor: ${setor}\n\n👀 Esta OS é para você!`,
+    tag: `sector-${numeroOS}`,
+    vibrate: [300, 100, 300, 100, 300],
+    requireInteraction: true,
+  })
+}
+
+// 🔔 Notificação de lembrete
+export async function notifyReminder(message: string) {
+  return sendLocalNotification('🔔 LEMBRETE', {
+    body: `💡 ${message}\n\n⏰ Não esqueça!`,
+    tag: 'reminder',
+    vibrate: [200, 100, 200],
+  })
 }
 

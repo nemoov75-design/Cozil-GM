@@ -54,7 +54,9 @@ import { EmailReportManager } from './email-report-manager'
 import { 
   notifyNewOS, 
   notifyOSUpdated, 
-  notifyOSCompleted, 
+  notifyOSCompleted,
+  notifyUrgentOS,
+  notifyNewOSInYourSector,
   requestNotificationPermission,
   registerServiceWorker,
   hasNotificationPermission 
@@ -524,10 +526,31 @@ export function DesignaliCreative() {
         const result = await response.json()
         console.log('✅ Nova OS criada:', result)
         
-        // 🔔 Enviar notificação push
+        // 🔔 Enviar notificação push inteligente baseada na prioridade
         if (result.os && result.os.numero_os) {
-          notifyNewOS(
-            result.os.numero_os,
+          const prioridade = newOSForm.prioridade || 'Média'
+          const setor = newOSForm.setor || 'Não informado'
+          const solicitante = newOSForm.solicitante || 'Não informado'
+          
+          // Notificação especial para OS de ALTA prioridade
+          if (prioridade === 'Alta') {
+            await notifyUrgentOS(
+              result.os.numero_os,
+              solicitante,
+              setor
+            )
+          } else {
+            // Notificação normal
+            await notifyNewOS(
+              result.os.numero_os,
+              solicitante,
+              setor
+            )
+          }
+        } else {
+          // Fallback se não tiver numero_os
+          await notifyNewOS(
+            'Nova OS',
             newOSForm.solicitante || 'Não informado',
             newOSForm.setor || 'Não informado'
           )
