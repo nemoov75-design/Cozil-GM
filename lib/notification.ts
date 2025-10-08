@@ -63,6 +63,8 @@ export async function sendLocalNotification(title: string, options?: Notificatio
   
   if (permission !== 'granted') {
     console.warn('⚠️ Permissão de notificação não concedida')
+    // FALLBACK: Usar alert como alternativa
+    alert(`🔔 ${title}\n\n${options?.body || ''}`)
     return null
   }
 
@@ -108,19 +110,33 @@ export async function sendLocalNotification(title: string, options?: Notificatio
     return notification
   } catch (error) {
     console.error('❌ Erro ao enviar notificação:', error)
+    // FALLBACK: Usar alert como alternativa
+    alert(`🔔 ${title}\n\n${options?.body || ''}`)
     return null
   }
 }
 
 // 📋 Notificação de nova OS criada
 export async function notifyNewOS(numeroOS: string, solicitante: string, setor: string) {
-  return sendLocalNotification('🚨 NOVA ORDEM DE SERVIÇO!', {
+  // Tentar notificação nativa primeiro
+  const notification = await sendLocalNotification('🚨 NOVA ORDEM DE SERVIÇO!', {
     body: `📋 OS #${numeroOS}\n👤 Solicitante: ${solicitante}\n🏢 Setor: ${setor}\n\n⚡ Clique para ver detalhes!`,
     tag: `os-${numeroOS}`,
     icon: '/icon-512x512.png',
     requireInteraction: true,
     vibrate: [300, 100, 300, 100, 300], // Vibração mais longa e chamativa
   })
+  
+  // Se não funcionou, usar toast personalizado
+  if (!notification) {
+    showCustomToast(
+      '🚨 NOVA ORDEM DE SERVIÇO!',
+      `📋 OS #${numeroOS}\n👤 ${solicitante}\n🏢 ${setor}`,
+      'warning'
+    )
+  }
+  
+  return notification
 }
 
 // ✏️ Notificação de OS atualizada
@@ -134,11 +150,23 @@ export async function notifyOSUpdated(numeroOS: string, status: string) {
 
 // ✅ Notificação de OS concluída
 export async function notifyOSCompleted(numeroOS: string) {
-  return sendLocalNotification('🎉 MISSÃO CUMPRIDA!', {
+  // Tentar notificação nativa primeiro
+  const notification = await sendLocalNotification('🎉 MISSÃO CUMPRIDA!', {
     body: `✅ OS #${numeroOS} CONCLUÍDA!\n🏆 Parabéns pelo trabalho!\n\n🎯 Nova missão pode estar chegando...`,
     tag: `os-${numeroOS}`,
     vibrate: [200, 50, 200, 50, 200], // Vibração de comemoração
   })
+  
+  // Se não funcionou, usar toast personalizado
+  if (!notification) {
+    showCustomToast(
+      '🎉 MISSÃO CUMPRIDA!',
+      `✅ OS #${numeroOS} CONCLUÍDA!\n🏆 Parabéns pelo trabalho!`,
+      'success'
+    )
+  }
+  
+  return notification
 }
 
 // 🔔 Registrar Service Worker
@@ -208,5 +236,75 @@ export async function notifyReminder(message: string) {
     tag: 'reminder',
     vibrate: [200, 100, 200],
   })
+}
+
+// 🎯 Toast personalizado que SEMPRE funciona
+export function showCustomToast(title: string, message: string, type: 'success' | 'warning' | 'info' = 'info') {
+  // Criar elemento de toast
+  const toast = document.createElement('div')
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+    color: white;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    z-index: 9999;
+    max-width: 300px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: slideIn 0.3s ease-out;
+  `
+  
+  toast.innerHTML = `
+    <div style="font-weight: bold; margin-bottom: 4px;">${title}</div>
+    <div>${message}</div>
+  `
+  
+  // Adicionar animação CSS
+  const style = document.createElement('style')
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `
+  document.head.appendChild(style)
+  
+  // Adicionar ao DOM
+  document.body.appendChild(toast)
+  
+  // Tocar som
+  playNotificationSound()
+  
+  // Remover após 5 segundos
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease-in'
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast)
+      }
+    }, 300)
+  }, 5000)
+  
+  // Remover ao clicar
+  toast.onclick = () => {
+    toast.style.animation = 'slideOut 0.3s ease-in'
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast)
+      }
+    }, 300)
+  }
+  
+  console.log('🎯 Toast personalizado exibido:', title)
+  return toast
 }
 
