@@ -548,9 +548,16 @@ export function DesignaliCreative() {
           const testNotification = new Notification('🚨 TESTE NOTIFICAÇÃO!', {
             body: 'Se você está vendo isso, as notificações funcionam!',
             icon: '/icon-192x192.png',
-            requireInteraction: true
+            requireInteraction: true,
+            vibrate: [500, 200, 500] // Vibração forte para teste
           })
           console.log('✅ Notificação de teste criada!')
+          
+          // Forçar exibição
+          testNotification.onclick = () => {
+            console.log('🖱️ Notificação de teste clicada!')
+            testNotification.close()
+          }
         } catch (error) {
           console.error('❌ Erro ao criar notificação de teste:', error)
         }

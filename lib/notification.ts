@@ -82,6 +82,12 @@ export async function sendLocalNotification(title: string, options?: Notificatio
     console.log('🔔 Criando notificação com título:', title)
     console.log('🔔 Opções:', defaultOptions)
     
+    // Forçar foco da janela antes de criar notificação
+    if (document.hidden) {
+      console.log('🔄 Janela em background, tentando focar...')
+      window.focus()
+    }
+    
     const notification = new Notification(title, defaultOptions)
     
     // Evento ao clicar na notificação
@@ -90,6 +96,13 @@ export async function sendLocalNotification(title: string, options?: Notificatio
       window.focus()
       notification.close()
     }
+
+    // Verificar se a notificação foi realmente exibida
+    setTimeout(() => {
+      if (notification) {
+        console.log('✅ Notificação ainda ativa após 1 segundo')
+      }
+    }, 1000)
 
     console.log('✅ Notificação criada com sucesso:', title)
     return notification
