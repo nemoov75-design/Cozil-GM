@@ -1,6 +1,3 @@
-import { initializeApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
-
 // Verificar se está no cliente
 const isClient = typeof window !== 'undefined';
 
@@ -14,11 +11,25 @@ const firebaseConfig = {
   appId: "1:258685936619:web:790175d6fb17d207df6fae"
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+// Inicializar Firebase apenas no cliente
+let app: any = null;
+let messaging: any = null;
 
-// Inicializar Firebase Cloud Messaging apenas no cliente
-export const messaging = isClient ? getMessaging(app) : null;
+if (isClient) {
+  try {
+    const { initializeApp } = require('firebase/app');
+    const { getMessaging, getToken, onMessage } = require('firebase/messaging');
+    
+    app = initializeApp(firebaseConfig);
+    messaging = getMessaging(app);
+    
+    console.log('🔥 Firebase inicializado com sucesso!');
+  } catch (error) {
+    console.error('❌ Erro ao inicializar Firebase:', error);
+  }
+}
+
+export { messaging };
 
 // Função para solicitar permissão e obter token
 export const requestNotificationPermission = async () => {
@@ -41,6 +52,7 @@ export const requestNotificationPermission = async () => {
       
       // Obter token FCM
       console.log('🔥 Firebase - Obtendo token FCM...')
+      const { getToken } = require('firebase/messaging');
       const token = await getToken(messaging, {
         vapidKey: 'BGv00Xb8Wg-01ciS-irK08eh9YzcYytJsS9mngWRuuljm_cSS4XTU1PzFG178flbRqa5xF7ULI7zwT-MjGMbFM'
       });
@@ -69,6 +81,7 @@ export const onMessageListener = () => {
   }
 
   return new Promise((resolve) => {
+    const { onMessage } = require('firebase/messaging');
     onMessage(messaging, (payload) => {
       console.log('📨 Mensagem recebida:', payload);
       resolve(payload);
