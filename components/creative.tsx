@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { requestNotificationPermission, onMessageListener } from "@/lib/firebase"
+import { requestNotificationPermission as requestFCMPermission, onMessageListener } from "@/lib/firebase"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Bell,
@@ -222,7 +222,7 @@ export function DesignaliCreative() {
     const setupFCM = async () => {
       try {
         // Solicitar permissão e obter token FCM
-        const token = await requestNotificationPermission()
+        const token = await requestFCMPermission()
         
         if (token && user) {
           console.log('🔑 Token FCM obtido:', token)
