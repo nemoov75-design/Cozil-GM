@@ -51,6 +51,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { EmailReportManager } from './email-report-manager'
+import { 
+  notifyNewOS, 
+  notifyOSUpdated, 
+  notifyOSCompleted, 
+  requestNotificationPermission,
+  registerServiceWorker,
+  hasNotificationPermission 
+} from '@/lib/notification'
 
 const maintenanceTypes = [
   {
@@ -188,6 +196,23 @@ export function DesignaliCreative() {
       return () => clearInterval(interval)
     }
   }, [user])
+
+  // 🔔 Registrar Service Worker e solicitar permissão de notificações
+  useEffect(() => {
+    // Registrar Service Worker
+    registerServiceWorker()
+    
+    // Solicitar permissão de notificações após 2 segundos (para não ser intrusivo)
+    if (!hasNotificationPermission()) {
+      setTimeout(() => {
+        requestNotificationPermission().then(permission => {
+          if (permission === 'granted') {
+            console.log('✅ Permissão de notificações concedida')
+          }
+        })
+      }, 2000)
+    }
+  }, [])
 
   // Fechar notificações quando clicar fora
   useEffect(() => {
@@ -411,9 +436,13 @@ export function DesignaliCreative() {
           os.id === osId ? { ...os, status: newStatus, last_updated: new Date().toISOString() } : os
         ));
         
-        // Se concluiu uma OS de alta prioridade, remover das notificações vistas
-        if (newStatus === 'Concluído') {
+        // 🔔 Enviar notificação se foi concluída
+        if (newStatus === 'Concluído' && selectedOS) {
+          notifyOSCompleted(selectedOS.numero_os || 'OS')
           setViewedNotifications(prev => prev.filter(id => id !== osId));
+        } else if (selectedOS) {
+          // Notificação de atualização para outros status
+          notifyOSUpdated(selectedOS.numero_os || 'OS', newStatus)
         }
         
         // Fechar modal
@@ -494,6 +523,15 @@ export function DesignaliCreative() {
       if (response.ok) {
         const result = await response.json()
         console.log('✅ Nova OS criada:', result)
+        
+        // 🔔 Enviar notificação push
+        if (result.os && result.os.numero_os) {
+          notifyNewOS(
+            result.os.numero_os,
+            newOSForm.solicitante || 'Não informado',
+            newOSForm.setor || 'Não informado'
+          )
+        }
         
         // Limpar formulário
         setNewOSForm({
