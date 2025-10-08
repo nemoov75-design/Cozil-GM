@@ -22,18 +22,25 @@ export const messaging = isClient ? getMessaging(app) : null;
 
 // Função para solicitar permissão e obter token
 export const requestNotificationPermission = async () => {
+  console.log('🔥 Firebase - Verificando disponibilidade...')
+  console.log('🔥 isClient:', isClient)
+  console.log('🔥 messaging:', messaging)
+  
   if (!isClient || !messaging) {
     console.log('❌ Firebase não disponível no servidor');
     return null;
   }
 
   try {
+    console.log('🔥 Firebase - Solicitando permissão...')
     const permission = await Notification.requestPermission();
+    console.log('🔥 Firebase - Permissão:', permission)
     
     if (permission === 'granted') {
       console.log('✅ Permissão de notificação concedida');
       
       // Obter token FCM
+      console.log('🔥 Firebase - Obtendo token FCM...')
       const token = await getToken(messaging, {
         vapidKey: 'BGv00Xb8Wg-01ciS-irK08eh9YzcYytJsS9mngWRuuljm_cSS4XTU1PzFG178flbRqa5xF7ULI7zwT-MjGMbFM'
       });
