@@ -1,6 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
+// Verificar se está no cliente
+const isClient = typeof window !== 'undefined';
+
 // Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDOwYm1tysQmZtZIeFDuVtSYF8HHlid5uk",
@@ -14,11 +17,16 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 
-// Inicializar Firebase Cloud Messaging
-export const messaging = getMessaging(app);
+// Inicializar Firebase Cloud Messaging apenas no cliente
+export const messaging = isClient ? getMessaging(app) : null;
 
 // Função para solicitar permissão e obter token
 export const requestNotificationPermission = async () => {
+  if (!isClient || !messaging) {
+    console.log('❌ Firebase não disponível no servidor');
+    return null;
+  }
+
   try {
     const permission = await Notification.requestPermission();
     
@@ -49,6 +57,10 @@ export const requestNotificationPermission = async () => {
 
 // Função para escutar mensagens em tempo real
 export const onMessageListener = () => {
+  if (!isClient || !messaging) {
+    return Promise.resolve(null);
+  }
+
   return new Promise((resolve) => {
     onMessage(messaging, (payload) => {
       console.log('📨 Mensagem recebida:', payload);
