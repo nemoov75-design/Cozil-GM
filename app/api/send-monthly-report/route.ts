@@ -19,17 +19,36 @@ export async function POST(request: NextRequest) {
       year: 'numeric' 
     })
     
-    // Buscar dados reais do banco
-    const workOrdersResponse = await fetch(`${request.nextUrl.origin}/api/os`)
-    const workOrdersData = await workOrdersResponse.json()
-    const workOrders = workOrdersData.workOrders || []
+    // Buscar dados reais do banco diretamente do Supabase
+    const { createClient } = require('@supabase/supabase-js')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+    
+    const { data: workOrders, error: workOrdersError } = await supabase
+      .from('work_orders')
+      .select('*')
+    
+    if (workOrdersError) {
+      console.error('❌ Erro ao buscar OSs:', workOrdersError)
+      return NextResponse.json({
+        success: false,
+        error: 'Erro ao buscar dados do banco'
+      }, { status: 500 })
+    }
     
     // Calcular dados reais do relatório
-    const totalOSs = workOrders.length
-    const concluidas = workOrders.filter((os: any) => os.status === 'Concluído').length
-    const pendentes = workOrders.filter((os: any) => os.status !== 'Concluído').length
-    const altas = workOrders.filter((os: any) => os.prioridade === 'Alta').length
+    console.log('📊 Dados encontrados:', { total: workOrders?.length || 0 })
+    console.log('📊 Primeiras 3 OSs:', workOrders?.slice(0, 3))
+    
+    const totalOSs = workOrders?.length || 0
+    const concluidas = workOrders?.filter((os: any) => os.status === 'Concluído').length || 0
+    const pendentes = workOrders?.filter((os: any) => os.status !== 'Concluído').length || 0
+    const altas = workOrders?.filter((os: any) => os.prioridade === 'Alta').length || 0
     const eficiencia = totalOSs > 0 ? ((concluidas / totalOSs) * 100).toFixed(1) : 0
+    
+    console.log('📊 Dados calculados:', { totalOSs, concluidas, pendentes, altas, eficiencia })
     
     const reportData = {
       totalOSs,
