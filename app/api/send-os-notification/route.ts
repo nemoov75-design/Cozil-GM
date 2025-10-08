@@ -43,19 +43,24 @@ export async function POST(request: NextRequest) {
       ? os.data_solicitacao.split('T')[0].split('-').reverse().join('/') 
       : new Date(os.created_at).toLocaleDateString('pt-BR')
     
-    // Badge de prioridade
+    // Badge de prioridade mais chamativo
     const prioridadeBadge = os.prioridade === 'Alta' 
-      ? '<span style="background: #dc2626; color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold;">🔴 Alta</span>'
+      ? '<span style="background: linear-gradient(45deg, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);">🚨 ALTA PRIORIDADE</span>'
       : os.prioridade === 'Média'
-      ? '<span style="background: #f59e0b; color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold;">🟡 Média</span>'
-      : '<span style="background: #10b981; color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold;">🟢 Baixa</span>'
+      ? '<span style="background: linear-gradient(45deg, #f59e0b, #fbbf24); color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);">⚠️ MÉDIA PRIORIDADE</span>'
+      : '<span style="background: linear-gradient(45deg, #10b981, #34d399); color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);">✅ BAIXA PRIORIDADE</span>'
     
     // Enviar para cada usuário
     const emailPromises = users.map(async (user) => {
       const sendSmtpEmail = new brevo.SendSmtpEmail()
       sendSmtpEmail.sender = { email: 'nemoov75@gmail.com', name: 'CozilTech - Sistema de Manutenção' }
       sendSmtpEmail.to = [{ email: user.email, name: user.name }]
-      sendSmtpEmail.subject = `🔔 Nova OS #${os.numero_os || os.id.substring(0, 8)} - ${os.prioridade} Prioridade`
+      // Assunto mais chamativo baseado na prioridade
+      const assunto = os.prioridade === 'Alta' 
+        ? `🚨🚨 URGENTE! Nova OS #${os.numero_os || os.id.substring(0, 8)} - ALTA PRIORIDADE!`
+        : `🔔 Nova OS #${os.numero_os || os.id.substring(0, 8)} - ${os.prioridade} Prioridade`
+      
+      sendSmtpEmail.subject = assunto
       sendSmtpEmail.htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 20px;">
           <div style="background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">

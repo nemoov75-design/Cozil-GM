@@ -194,9 +194,26 @@ export async function POST(request: NextRequest) {
       // Não retornar erro, pois a OS foi criada com sucesso
     }
 
-    // 🔔 Email removido - agora usa notificações push no navegador/app
-    // O email será usado apenas para o relatório mensal automático
-    console.log('🔔 Notificações push serão exibidas no navegador/app do usuário')
+    // 📧 Enviar notificação por email para todos os usuários cadastrados
+    try {
+      console.log('📧 Enviando notificação de nova OS por email...')
+      const notificationResponse = await fetch(`${request.nextUrl.origin}/api/send-os-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ osId: newOS.id })
+      })
+      
+      if (notificationResponse.ok) {
+        console.log('✅ Emails de notificação enviados com sucesso')
+      } else {
+        console.error('⚠️ Erro ao enviar emails, mas OS foi criada')
+      }
+    } catch (notifError) {
+      console.error('⚠️ Erro ao enviar emails:', notifError)
+      // Não retornar erro, pois a OS foi criada com sucesso
+    }
 
     // 🔄 Sincronizar automaticamente com Google Sheets
     try {

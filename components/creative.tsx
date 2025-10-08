@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
+import { requestNotificationPermission, onMessageListener } from "@/lib/firebase"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Bell,
@@ -215,6 +216,59 @@ export function DesignaliCreative() {
       }, 2000)
     }
   }, [])
+
+  // 🔥 Configurar Firebase Cloud Messaging
+  useEffect(() => {
+    const setupFCM = async () => {
+      try {
+        // Solicitar permissão e obter token FCM
+        const token = await requestNotificationPermission()
+        
+        if (token && user) {
+          console.log('🔑 Token FCM obtido:', token)
+          
+          // Salvar token no banco de dados
+          const deviceInfo = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            timestamp: new Date().toISOString()
+          }
+          
+          const response = await fetch('/api/fcm-tokens', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              token: token,
+              deviceInfo: deviceInfo
+            })
+          })
+          
+          if (response.ok) {
+            console.log('✅ Token FCM salvo no banco de dados')
+          } else {
+            console.error('❌ Erro ao salvar token FCM')
+          }
+        }
+        
+        // Escutar mensagens em tempo real
+        onMessageListener().then((payload) => {
+          console.log('📨 Mensagem FCM recebida:', payload)
+          // Aqui você pode adicionar lógica para mostrar notificações customizadas
+        })
+        
+      } catch (error) {
+        console.error('❌ Erro ao configurar FCM:', error)
+      }
+    }
+    
+    if (user) {
+      setupFCM()
+    }
+  }, [user])
 
   // Fechar notificações quando clicar fora
   useEffect(() => {
@@ -562,6 +616,42 @@ export function DesignaliCreative() {
           console.error('❌ Erro ao criar notificação de teste:', error)
         }
         
+        // 🔥 Enviar notificação FCM para todos os usuários
+        try {
+          console.log('🔥 Enviando notificação FCM...')
+          
+          // Buscar todos os tokens FCM dos usuários
+          const tokensResponse = await fetch('/api/fcm-tokens')
+          if (tokensResponse.ok) {
+            const tokensData = await tokensResponse.json()
+            const tokens = tokensData.tokens.map((t: any) => t.token)
+            
+            if (tokens.length > 0) {
+              // Enviar notificação FCM
+              const fcmResponse = await fetch('/api/send-fcm-notification', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  os: result.os,
+                  tokens: tokens
+                })
+              })
+              
+              if (fcmResponse.ok) {
+                console.log('✅ Notificação FCM enviada com sucesso')
+              } else {
+                console.error('❌ Erro ao enviar notificação FCM')
+              }
+            } else {
+              console.log('⚠️ Nenhum token FCM encontrado')
+            }
+          }
+        } catch (fcmError) {
+          console.error('❌ Erro ao enviar notificação FCM:', fcmError)
+        }
+
         // 🔔 Enviar notificação push inteligente baseada na prioridade
         if (result.os && result.os.numero_os) {
           const prioridade = newOSForm.prioridade || 'Média'
