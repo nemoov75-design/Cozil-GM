@@ -2199,7 +2199,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                       <div className="flex items-center justify-between">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                            <Calendar className="h-6 w-6 text-blue-600" />
+                            <Calendar className="h-6 w-6 text-red-600" />
                             Cronograma de Manutenção Preventiva
                           </h2>
                           <p className="text-gray-600 mt-1">
@@ -2208,7 +2208,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                         </div>
                         <Button
                           onClick={() => setShowNewCronogramaModal(true)}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-red-600 hover:bg-red-700"
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Nova Manutenção
@@ -2281,7 +2281,7 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                               </p>
                               <Button
                                 onClick={() => setShowNewCronogramaModal(true)}
-                                className="bg-blue-600 hover:bg-blue-700"
+                                className="bg-red-600 hover:bg-red-700"
                               >
                                 <Plus className="h-4 w-4 mr-2" />
                                 Nova Manutenção
@@ -3758,6 +3758,185 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
             </button>
           </div>
         </motion.div>
+      )}
+
+      {/* Modal Nova Manutenção */}
+      {showNewCronogramaModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Nova Manutenção Preventiva</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowNewCronogramaModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              try {
+                const response = await fetch('/api/cronograma', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(newCronogramaForm)
+                })
+                
+                const data = await response.json()
+                
+                if (data.success) {
+                  setToastMessage('✅ Manutenção criada com sucesso!')
+                  setShowToast(true)
+                  setTimeout(() => setShowToast(false), 3000)
+                  setShowNewCronogramaModal(false)
+                  setNewCronogramaForm({
+                    equipamento: '',
+                    local: '',
+                    tipo_manutencao: '',
+                    data_programada: '',
+                    hora_programada: '',
+                    responsavel: '',
+                    prioridade: 'Média',
+                    observacoes: ''
+                  })
+                  fetchCronograma()
+                } else {
+                  setToastMessage('❌ Erro ao criar manutenção: ' + data.error)
+                  setShowToast(true)
+                  setTimeout(() => setShowToast(false), 3000)
+                }
+              } catch (error) {
+                console.error('Erro ao criar manutenção:', error)
+                setToastMessage('❌ Erro ao criar manutenção')
+                setShowToast(true)
+                setTimeout(() => setShowToast(false), 3000)
+              }
+            }} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="equipamento">Equipamento *</Label>
+                  <Input
+                    id="equipamento"
+                    value={newCronogramaForm.equipamento}
+                    onChange={(e) => setNewCronogramaForm({...newCronogramaForm, equipamento: e.target.value})}
+                    placeholder="Ex: Ar-condicionado 01"
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="local">Local *</Label>
+                  <Input
+                    id="local"
+                    value={newCronogramaForm.local}
+                    onChange={(e) => setNewCronogramaForm({...newCronogramaForm, local: e.target.value})}
+                    placeholder="Ex: Sala de Reuniões"
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tipo_manutencao">Tipo de Manutenção *</Label>
+                  <Input
+                    id="tipo_manutencao"
+                    value={newCronogramaForm.tipo_manutencao}
+                    onChange={(e) => setNewCronogramaForm({...newCronogramaForm, tipo_manutencao: e.target.value})}
+                    placeholder="Ex: Limpeza de filtros"
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="data_programada">Data Programada *</Label>
+                  <Input
+                    id="data_programada"
+                    type="date"
+                    value={newCronogramaForm.data_programada}
+                    onChange={(e) => setNewCronogramaForm({...newCronogramaForm, data_programada: e.target.value})}
+                    className="rounded-xl"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="hora_programada">Hora Programada</Label>
+                  <Input
+                    id="hora_programada"
+                    type="time"
+                    value={newCronogramaForm.hora_programada}
+                    onChange={(e) => setNewCronogramaForm({...newCronogramaForm, hora_programada: e.target.value})}
+                    className="rounded-xl"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="responsavel">Responsável</Label>
+                  <Input
+                    id="responsavel"
+                    value={newCronogramaForm.responsavel}
+                    onChange={(e) => setNewCronogramaForm({...newCronogramaForm, responsavel: e.target.value})}
+                    placeholder="Ex: João Silva"
+                    className="rounded-xl"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="prioridade">Prioridade</Label>
+                  <Select
+                    value={newCronogramaForm.prioridade}
+                    onValueChange={(value) => setNewCronogramaForm({...newCronogramaForm, prioridade: value})}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Baixa">Baixa</SelectItem>
+                      <SelectItem value="Média">Média</SelectItem>
+                      <SelectItem value="Alta">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="observacoes">Observações</Label>
+                <Textarea
+                  id="observacoes"
+                  value={newCronogramaForm.observacoes}
+                  onChange={(e) => setNewCronogramaForm({...newCronogramaForm, observacoes: e.target.value})}
+                  placeholder="Observações adicionais sobre a manutenção..."
+                  rows={3}
+                  className="rounded-xl"
+                />
+              </div>
+              
+              <div className="flex gap-3 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewCronogramaModal(false)}
+                  className="rounded-xl"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-red-600 hover:bg-red-700 rounded-xl"
+                >
+                  Criar Manutenção
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   )
