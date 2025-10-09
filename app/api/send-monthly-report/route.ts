@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       concluidas,
       pendentes,
       altas,
-      eficiencia: parseFloat(eficiencia).toString()
+      eficiencia: isNaN(parseFloat(eficiencia)) ? '0' : parseFloat(eficiencia).toString()
     }
     
     // Enviar para cada usuário
