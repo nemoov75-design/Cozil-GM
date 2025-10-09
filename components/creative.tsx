@@ -36,7 +36,8 @@ import {
   Filter,
   Eye,
   Edit,
-  Printer
+  Printer,
+  Calendar
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -99,6 +100,11 @@ const sidebarItems = [
     title: "Todas as OSs",
     icon: <FileText />,
     key: "all-orders",
+  },
+  {
+    title: "Cronograma",
+    icon: <Calendar />,
+    key: "cronograma",
   },
   {
     title: "Relatórios",
@@ -2014,6 +2020,43 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                               ))}
                           </div>
                         )}
+                      </div>
+                    </motion.div>
+                  </section>
+                </TabsContent>
+
+                <TabsContent value="cronograma" className="space-y-8 mt-0">
+                  <section>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="space-y-8"
+                    >
+                      <div className="text-center py-12">
+                        <Calendar className="h-16 w-16 mx-auto text-blue-600 mb-4" />
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                          Cronograma de Manutenção Preventiva
+                        </h2>
+                        <p className="text-gray-600 mb-6">
+                          Gerencie e acompanhe as manutenções preventivas programadas
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                          <Button
+                            onClick={() => window.location.href = '/cronograma'}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Ver Cronograma
+                          </Button>
+                          <Button
+                            onClick={() => window.location.href = '/cronograma/novo'}
+                            variant="outline"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Nova Manutenção
+                          </Button>
+                        </div>
                       </div>
                     </motion.div>
                   </section>
