@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const concluidas = workOrders?.filter((os: any) => os.status === 'Concluído').length || 0
     const pendentes = workOrders?.filter((os: any) => os.status !== 'Concluído').length || 0
     const altas = workOrders?.filter((os: any) => os.prioridade === 'Alta').length || 0
-    const eficiencia = totalOSs > 0 ? ((concluidas / totalOSs) * 100).toFixed(1) : 0
+    const eficiencia = totalOSs > 0 ? ((concluidas / totalOSs) * 100).toFixed(1) : '0'
     
     console.log('📊 Dados calculados:', { totalOSs, concluidas, pendentes, altas, eficiencia })
     
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       concluidas,
       pendentes,
       altas,
-      eficiencia: isNaN(parseFloat(eficiencia)) ? '0' : parseFloat(eficiencia).toString()
+      eficiencia: eficiencia
     }
     
     // Enviar para cada usuário
