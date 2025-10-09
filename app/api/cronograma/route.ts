@@ -50,6 +50,24 @@ export async function POST(request: NextRequest) {
     
     console.log('💾 Inserindo no Supabase:', insertData)
     
+    // Verificar se a tabela existe primeiro
+    const { data: tableCheck, error: tableError } = await supabase
+      .from('cronograma_manutencao')
+      .select('id')
+      .limit(1)
+    
+    if (tableError) {
+      console.error('❌ Tabela cronograma_manutencao não existe:', tableError)
+      return NextResponse.json(
+        { 
+          error: 'Tabela de cronograma não existe. Execute o SQL no Supabase primeiro.',
+          details: tableError.message,
+          sqlFile: 'cronograma-schema.sql'
+        },
+        { status: 500 }
+      )
+    }
+    
     // Inserir no Supabase
     const { data: newCronograma, error } = await supabase
       .from('cronograma_manutencao')
@@ -62,7 +80,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Erro ao criar manutenção preventiva',
-          details: error.message
+          details: error.message,
+          insertData: insertData
         },
         { status: 500 }
       )
