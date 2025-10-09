@@ -227,6 +227,12 @@ export function DesignaliCreative() {
     }
   }, [user])
 
+  // Forçar reload para evitar cache
+  useEffect(() => {
+    const timestamp = Date.now()
+    console.log('🔄 Sistema carregado em:', new Date(timestamp).toLocaleString())
+  }, [])
+
   // 🔔 Registrar Service Worker e solicitar permissão de notificações
   useEffect(() => {
     // Registrar Service Worker
