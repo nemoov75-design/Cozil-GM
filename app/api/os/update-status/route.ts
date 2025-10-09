@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('❌ Erro geral na atualização:', error)
       return NextResponse.json(
-        { error: 'Erro interno do servidor', details: error.message },
+        { error: 'Erro interno do servidor', details: error instanceof Error ? error.message : 'Erro desconhecido' },
         { status: 500 }
       )
     }
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao atualizar status da OS:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor', details: error instanceof Error ? error.message : 'Erro desconhecido' },
       { status: 500 }
     )
   }
