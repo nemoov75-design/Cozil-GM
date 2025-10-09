@@ -428,14 +428,6 @@ export function DesignaliCreative() {
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR')
-    } catch {
-      return 'N/A'
-    }
-  }
 
   // Função para buscar OSs da API
   const fetchWorkOrders = async () => {
