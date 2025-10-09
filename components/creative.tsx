@@ -1651,15 +1651,12 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
         <main className="flex-1 p-4 md:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <TabsList className="grid w-full max-w-[600px] grid-cols-4 rounded-2xl p-1">
+              <TabsList className="grid w-full max-w-[450px] grid-cols-3 rounded-2xl p-1">
                 <TabsTrigger value="home" className="rounded-xl data-[state=active]:rounded-xl">
                   Dashboard
                 </TabsTrigger>
                 <TabsTrigger value="all-orders" className="rounded-xl data-[state=active]:rounded-xl">
                   Todas as OSs
-                </TabsTrigger>
-                <TabsTrigger value="cronograma" className="rounded-xl data-[state=active]:rounded-xl">
-                  Cronograma
                 </TabsTrigger>
                 <TabsTrigger value="reports" className="rounded-xl data-[state=active]:rounded-xl">
                   Relatórios
