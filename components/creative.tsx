@@ -2193,29 +2193,31 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                       className="space-y-8"
                     >
                       {/* Cabeçalho do Cronograma */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                            <Calendar className="h-6 w-6 text-red-600" />
-                            Cronograma de Manutenção Preventiva
+                          <h2 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2 md:gap-3">
+                            <Calendar className="h-5 w-5 md:h-6 md:w-6 text-red-600" />
+                            <span className="hidden sm:inline">Cronograma de Manutenção Preventiva</span>
+                            <span className="sm:hidden">Cronograma</span>
                           </h2>
-                          <p className="text-gray-600 mt-1">
+                          <p className="text-sm md:text-base text-gray-600 mt-1 hidden md:block">
                             Gerencie e acompanhe as manutenções preventivas programadas
                           </p>
                         </div>
                         <Button
                           onClick={() => setShowNewCronogramaModal(true)}
-                          className="bg-red-600 hover:bg-red-700"
+                          className="bg-red-600 hover:bg-red-700 w-full md:w-auto"
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Nova Manutenção
+                          <span className="hidden sm:inline">Nova Manutenção</span>
+                          <span className="sm:hidden">Nova</span>
                         </Button>
                       </div>
 
                       {/* Filtros */}
                       <Card>
-                        <CardContent className="p-6">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <CardContent className="p-4 md:p-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                             <div>
                               <Label className="text-sm font-medium text-gray-700 mb-2 block">
                                 <Search className="h-4 w-4 inline mr-1" />
@@ -2288,22 +2290,24 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                         ) : (
                           filteredCronograma.map((item) => (
                             <Card key={item.id} className="hover:shadow-md transition-shadow">
-                              <CardContent className="p-6">
-                                <div className="flex items-start justify-between">
+                              <CardContent className="p-4 md:p-6">
+                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                   <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-3">
-                                      <h3 className="text-lg font-semibold text-gray-900">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                                      <h3 className="text-base md:text-lg font-semibold text-gray-900">
                                         {item.equipamento}
                                       </h3>
-                                      <Badge className={getPrioridadeBadge(item.prioridade)}>
-                                        {item.prioridade}
-                                      </Badge>
-                                      <Badge className={getStatusBadge(item.status)}>
-                                        {item.status}
-                                      </Badge>
+                                      <div className="flex flex-wrap gap-2">
+                                        <Badge className={`${getPrioridadeBadge(item.prioridade)} text-xs`}>
+                                          {item.prioridade}
+                                        </Badge>
+                                        <Badge className={`${getStatusBadge(item.status)} text-xs`}>
+                                          {item.status}
+                                        </Badge>
+                                      </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 text-sm text-gray-600">
                                       <div>
                                         <strong>Local:</strong> {item.local}
                                       </div>
@@ -2320,14 +2324,14 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                         </div>
                                       )}
                                       {item.observacoes && (
-                                        <div className="md:col-span-3">
+                                        <div className="sm:col-span-2 lg:col-span-3">
                                           <strong>Observações:</strong> {item.observacoes}
                                         </div>
                                       )}
                                     </div>
                                   </div>
                                   
-                                  <div className="flex gap-2 ml-4">
+                                  <div className="flex flex-wrap gap-2 md:flex-col lg:flex-row lg:gap-2">
                                     {item.status === 'Agendada' && (
                                       <TooltipProvider>
                                         <Tooltip>
@@ -2335,9 +2339,10 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                             <Button
                                               size="sm"
                                               onClick={() => handleGerarOSCronograma(item.id)}
-                                              className="bg-green-600 hover:bg-green-700"
+                                              className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                                             >
-                                              <Play className="h-4 w-4" />
+                                              <Play className="h-4 w-4 mr-1" />
+                                              <span className="hidden sm:inline">Gerar OS</span>
                                             </Button>
                                           </TooltipTrigger>
                                           <TooltipContent>
@@ -2354,8 +2359,10 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                             size="sm"
                                             variant="outline"
                                             onClick={() => handleUpdateCronogramaStatus(item.id, 'Em Andamento')}
+                                            className="w-full sm:w-auto"
                                           >
-                                            <Clock className="h-4 w-4" />
+                                            <Clock className="h-4 w-4 mr-1" />
+                                            <span className="hidden sm:inline">Iniciar</span>
                                           </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -2371,8 +2378,10 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                             size="sm"
                                             variant="outline"
                                             onClick={() => handleUpdateCronogramaStatus(item.id, 'Concluída')}
+                                            className="w-full sm:w-auto"
                                           >
-                                            <CheckCircle className="h-4 w-4" />
+                                            <CheckCircle className="h-4 w-4 mr-1" />
+                                            <span className="hidden sm:inline">Concluir</span>
                                           </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -2388,8 +2397,10 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                             size="sm"
                                             variant="outline"
                                             onClick={() => handleDeleteCronograma(item.id)}
+                                            className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
                                           >
-                                            <Trash2 className="h-4 w-4" />
+                                            <Trash2 className="h-4 w-4 mr-1" />
+                                            <span className="hidden sm:inline">Deletar</span>
                                           </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
