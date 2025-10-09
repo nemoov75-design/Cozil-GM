@@ -2089,6 +2089,8 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                     <SelectItem value="Estacionamento 1">Estacionamento 1</SelectItem>
                                     <SelectItem value="Estacionamento 2">Estacionamento 2</SelectItem>
                                     <SelectItem value="Almoxarifado">Almoxarifado</SelectItem>
+                                    <SelectItem value="Restaurante">Restaurante</SelectItem>
+                                    <SelectItem value="T.I.">T.I.</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>

@@ -369,6 +369,8 @@ export default function AuthPage() {
                           <SelectItem value="Produção">Produção</SelectItem>
                           <SelectItem value="Gestão">Gestão</SelectItem>
                           <SelectItem value="Administrativo">Administrativo</SelectItem>
+                          <SelectItem value="Restaurante">Restaurante</SelectItem>
+                          <SelectItem value="T.I.">T.I.</SelectItem>
                           <SelectItem value="Outro">Outro</SelectItem>
                         </SelectContent>
                       </Select>

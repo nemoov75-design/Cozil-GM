@@ -162,3 +162,5 @@ O e-mail enviado contém:
 **🎉 Sistema totalmente funcional e em sincronia com Supabase!**
 
 
+
+

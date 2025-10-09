@@ -1,29 +1,23 @@
--- 🗑️ SCRIPT PARA LIMPAR DADOS FICTÍCIOS E PREPARAR PARA PRODUÇÃO
--- ⚠️ ATENÇÃO: Este script apaga TODOS os dados das tabelas!
--- Execute este script no Supabase SQL Editor antes de colocar em produção
+-- 🗑️ LIMPEZA COMPLETA PARA PRODUÇÃO
+-- ⚠️ ATENÇÃO: Este script vai APAGAR TODOS os dados fictícios!
 
--- 1️⃣ Limpar todas as Ordens de Serviço
+-- 1. Limpar todas as OSs (Ordens de Serviço)
 DELETE FROM work_orders;
 
--- 2️⃣ Limpar todos os Usuários (exceto os que você quer manter)
--- Opção A: Apagar TODOS os usuários
-DELETE FROM users;
+-- 2. Limpar todos os tokens FCM
+DELETE FROM fcm_tokens;
 
--- Opção B: Apagar apenas usuários fictícios (descomente se preferir)
--- DELETE FROM users WHERE email LIKE '%@example.com';
--- DELETE FROM users WHERE name LIKE 'Usuario%';
+-- 3. Limpar todos os usuários (exceto se quiser manter alguns)
+-- DELETE FROM users;
 
--- 3️⃣ Resetar os contadores de ID (para começar do 1)
-ALTER SEQUENCE work_orders_id_seq RESTART WITH 1;
-ALTER SEQUENCE users_id_seq RESTART WITH 1;
+-- 4. Verificar se está limpo
+SELECT 'OSs restantes:' as tipo, COUNT(*) as quantidade FROM work_orders
+UNION ALL
+SELECT 'Tokens FCM restantes:' as tipo, COUNT(*) as quantidade FROM fcm_tokens
+UNION ALL
+SELECT 'Usuários restantes:' as tipo, COUNT(*) as quantidade FROM users;
 
--- ✅ Pronto! Banco de dados limpo e pronto para produção
--- Agora você pode começar a usar o sistema com dados reais
+-- 5. Resetar contadores (se necessário)
+-- ALTER SEQUENCE work_orders_id_seq RESTART WITH 1;
 
--- 📝 PRÓXIMOS PASSOS:
--- 1. Execute este script no Supabase SQL Editor
--- 2. Cadastre os usuários reais no sistema
--- 3. Comece a criar OSs reais
--- 4. O Google Sheets será sincronizado automaticamente
-
-
+-- ✅ DADOS LIMPOS! Sistema pronto para produção!
