@@ -134,6 +134,23 @@ export function DesignaliCreative() {
     concluidas: 0,
     altas: 0
   })
+  
+  // Estados do Cronograma
+  const [cronograma, setCronograma] = useState<any[]>([])
+  const [cronogramaSearchTerm, setCronogramaSearchTerm] = useState('')
+  const [cronogramaStatusFilter, setCronogramaStatusFilter] = useState('todos')
+  const [cronogramaPrioridadeFilter, setCronogramaPrioridadeFilter] = useState('todos')
+  const [showNewCronogramaModal, setShowNewCronogramaModal] = useState(false)
+  const [newCronogramaForm, setNewCronogramaForm] = useState({
+    equipamento: '',
+    local: '',
+    tipo_manutencao: '',
+    data_programada: '',
+    hora_programada: '',
+    responsavel: '',
+    prioridade: 'Média',
+    observacoes: ''
+  })
   const [selectedOS, setSelectedOS] = useState<any>(null)
   const [showOSDetails, setShowOSDetails] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -198,9 +215,13 @@ export function DesignaliCreative() {
   useEffect(() => {
     if (user) {
       fetchWorkOrders()
+      fetchCronograma()
       
       // Atualizar a cada 30 segundos
-      const interval = setInterval(fetchWorkOrders, 30000)
+      const interval = setInterval(() => {
+        fetchWorkOrders()
+        fetchCronograma()
+      }, 30000)
       
       return () => clearInterval(interval)
     }
@@ -386,6 +407,36 @@ export function DesignaliCreative() {
     }
   }
 
+  // Funções auxiliares para o Cronograma
+  const getPrioridadeBadge = (prioridade: string) => {
+    const colors = {
+      'Alta': 'bg-red-100 text-red-800 border-red-200',
+      'Média': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'Baixa': 'bg-green-100 text-green-800 border-green-200'
+    }
+    return colors[prioridade as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+  }
+
+  const getStatusBadge = (status: string) => {
+    const colors = {
+      'Agendada': 'bg-blue-100 text-blue-800 border-blue-200',
+      'Em Andamento': 'bg-orange-100 text-orange-800 border-orange-200',
+      'Concluída': 'bg-green-100 text-green-800 border-green-200',
+      'Atrasada': 'bg-red-100 text-red-800 border-red-200',
+      'Cancelada': 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+  }
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('pt-BR')
+    } catch {
+      return 'N/A'
+    }
+  }
+
   // Função para buscar OSs da API
   const fetchWorkOrders = async () => {
     try {
@@ -443,6 +494,122 @@ export function DesignaliCreative() {
     }
   }
 
+  // Funções do Cronograma
+  const fetchCronograma = async () => {
+    try {
+      const response = await fetch('/api/cronograma')
+      const data = await response.json()
+      
+      if (data.success) {
+        setCronograma(data.cronograma)
+      } else {
+        console.error('Erro ao buscar cronograma:', data.error)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar cronograma:', error)
+    }
+  }
+
+  // Filtrar cronograma
+  const filteredCronograma = cronograma.filter(item => {
+    const matchesSearch = item.equipamento.toLowerCase().includes(cronogramaSearchTerm.toLowerCase()) ||
+                         item.local.toLowerCase().includes(cronogramaSearchTerm.toLowerCase()) ||
+                         item.tipo_manutencao.toLowerCase().includes(cronogramaSearchTerm.toLowerCase())
+    
+    const matchesStatus = cronogramaStatusFilter === 'todos' || item.status === cronogramaStatusFilter
+    const matchesPrioridade = cronogramaPrioridadeFilter === 'todos' || item.prioridade === cronogramaPrioridadeFilter
+    
+    return matchesSearch && matchesStatus && matchesPrioridade
+  })
+
+  // Gerar OS a partir do cronograma
+  const handleGerarOSCronograma = async (cronogramaId: string) => {
+    try {
+      const response = await fetch('/api/cronograma/gerar-os', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cronogramaId })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setToastMessage('✅ OS gerada com sucesso!')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+        fetchCronograma() // Recarregar dados
+        fetchWorkOrders() // Recarregar OSs
+      } else {
+        setToastMessage('❌ Erro ao gerar OS: ' + data.error)
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+      }
+    } catch (error) {
+      console.error('Erro ao gerar OS:', error)
+      setToastMessage('❌ Erro ao gerar OS')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+    }
+  }
+
+  // Atualizar status do cronograma
+  const handleUpdateCronogramaStatus = async (id: string, newStatus: string) => {
+    try {
+      const response = await fetch('/api/cronograma', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, status: newStatus })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        fetchCronograma() // Recarregar dados
+      } else {
+        setToastMessage('❌ Erro ao atualizar status: ' + data.error)
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error)
+      setToastMessage('❌ Erro ao atualizar status')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+    }
+  }
+
+  // Deletar manutenção
+  const handleDeleteCronograma = async (id: string) => {
+    if (!confirm('Tem certeza que deseja deletar esta manutenção?')) return
+    
+    try {
+      const response = await fetch(`/api/cronograma?id=${id}`, {
+        method: 'DELETE'
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        fetchCronograma() // Recarregar dados
+        setToastMessage('✅ Manutenção deletada com sucesso!')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+      } else {
+        setToastMessage('❌ Erro ao deletar: ' + data.error)
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
+      }
+    } catch (error) {
+      console.error('Erro ao deletar:', error)
+      setToastMessage('❌ Erro ao deletar')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+    }
+  }
 
   // Função para buscar OSs arquivadas do Google Sheets
   const fetchArchivedOrders = async () => {
@@ -1492,12 +1659,15 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
         <main className="flex-1 p-4 md:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <TabsList className="grid w-full max-w-[450px] grid-cols-3 rounded-2xl p-1">
+              <TabsList className="grid w-full max-w-[600px] grid-cols-4 rounded-2xl p-1">
                 <TabsTrigger value="home" className="rounded-xl data-[state=active]:rounded-xl">
                   Dashboard
                 </TabsTrigger>
                 <TabsTrigger value="all-orders" className="rounded-xl data-[state=active]:rounded-xl">
                   Todas as OSs
+                </TabsTrigger>
+                <TabsTrigger value="cronograma" className="rounded-xl data-[state=active]:rounded-xl">
+                  Cronograma
                 </TabsTrigger>
                 <TabsTrigger value="reports" className="rounded-xl data-[state=active]:rounded-xl">
                   Relatórios
@@ -2033,30 +2203,217 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                       transition={{ duration: 0.5 }}
                       className="space-y-8"
                     >
-                      <div className="text-center py-12">
-                        <Calendar className="h-16 w-16 mx-auto text-blue-600 mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                          Cronograma de Manutenção Preventiva
-                        </h2>
-                        <p className="text-gray-600 mb-6">
-                          Gerencie e acompanhe as manutenções preventivas programadas
-                        </p>
-                        <div className="flex gap-3 justify-center">
-                          <Button
-                            onClick={() => window.location.href = '/cronograma'}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Ver Cronograma
-                          </Button>
-                          <Button
-                            onClick={() => window.location.href = '/cronograma/novo'}
-                            variant="outline"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Nova Manutenção
-                          </Button>
+                      {/* Cabeçalho do Cronograma */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <Calendar className="h-6 w-6 text-blue-600" />
+                            Cronograma de Manutenção Preventiva
+                          </h2>
+                          <p className="text-gray-600 mt-1">
+                            Gerencie e acompanhe as manutenções preventivas programadas
+                          </p>
                         </div>
+                        <Button
+                          onClick={() => setShowNewCronogramaModal(true)}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Nova Manutenção
+                        </Button>
+                      </div>
+
+                      {/* Filtros */}
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                <Search className="h-4 w-4 inline mr-1" />
+                                Buscar
+                              </Label>
+                              <Input
+                                placeholder="Equipamento, local, tipo..."
+                                value={cronogramaSearchTerm}
+                                onChange={(e) => setCronogramaSearchTerm(e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Status
+                              </Label>
+                              <Select value={cronogramaStatusFilter} onValueChange={setCronogramaStatusFilter}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="todos">Todos</SelectItem>
+                                  <SelectItem value="Agendada">Agendada</SelectItem>
+                                  <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                                  <SelectItem value="Concluída">Concluída</SelectItem>
+                                  <SelectItem value="Atrasada">Atrasada</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Prioridade
+                              </Label>
+                              <Select value={cronogramaPrioridadeFilter} onValueChange={setCronogramaPrioridadeFilter}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="todos">Todas</SelectItem>
+                                  <SelectItem value="Alta">Alta</SelectItem>
+                                  <SelectItem value="Média">Média</SelectItem>
+                                  <SelectItem value="Baixa">Baixa</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Lista de Manutenções */}
+                      <div className="grid gap-4">
+                        {filteredCronograma.length === 0 ? (
+                          <Card>
+                            <CardContent className="p-8 text-center">
+                              <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                Nenhuma manutenção encontrada
+                              </h3>
+                              <p className="text-gray-600 mb-4">
+                                Crie uma nova manutenção preventiva para começar
+                              </p>
+                              <Button
+                                onClick={() => setShowNewCronogramaModal(true)}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Nova Manutenção
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          filteredCronograma.map((item) => (
+                            <Card key={item.id} className="hover:shadow-md transition-shadow">
+                              <CardContent className="p-6">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <h3 className="text-lg font-semibold text-gray-900">
+                                        {item.equipamento}
+                                      </h3>
+                                      <Badge className={getPrioridadeBadge(item.prioridade)}>
+                                        {item.prioridade}
+                                      </Badge>
+                                      <Badge className={getStatusBadge(item.status)}>
+                                        {item.status}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                      <div>
+                                        <strong>Local:</strong> {item.local}
+                                      </div>
+                                      <div>
+                                        <strong>Tipo:</strong> {item.tipo_manutencao}
+                                      </div>
+                                      <div>
+                                        <strong>Data:</strong> {formatDate(item.data_programada)}
+                                        {item.hora_programada && ` às ${item.hora_programada}`}
+                                      </div>
+                                      {item.responsavel && (
+                                        <div>
+                                          <strong>Responsável:</strong> {item.responsavel}
+                                        </div>
+                                      )}
+                                      {item.observacoes && (
+                                        <div className="md:col-span-3">
+                                          <strong>Observações:</strong> {item.observacoes}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex gap-2 ml-4">
+                                    {item.status === 'Agendada' && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              size="sm"
+                                              onClick={() => handleGerarOSCronograma(item.id)}
+                                              className="bg-green-600 hover:bg-green-700"
+                                            >
+                                              <Play className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Gerar OS</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                    
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleUpdateCronogramaStatus(item.id, 'Em Andamento')}
+                                          >
+                                            <Clock className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Iniciar</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                    
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleUpdateCronogramaStatus(item.id, 'Concluída')}
+                                          >
+                                            <CheckCircle className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Concluir</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                    
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleDeleteCronograma(item.id)}
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Deletar</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))
+                        )}
                       </div>
                     </motion.div>
                   </section>
