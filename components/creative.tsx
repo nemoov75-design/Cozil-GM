@@ -560,7 +560,26 @@ export function DesignaliCreative() {
       const data = await response.json()
       
       if (data.success) {
+        // Se status foi alterado para "Concluída", enviar notificação
+        if (newStatus === 'Concluída') {
+          try {
+            await fetch('/api/cronograma/notificar-conclusao', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ cronogramaId: id })
+            })
+            console.log('📧 Notificação de conclusão enviada')
+          } catch (error) {
+            console.error('Erro ao enviar notificação de conclusão:', error)
+          }
+        }
+        
         fetchCronograma() // Recarregar dados
+        setToastMessage('✅ Status atualizado com sucesso!')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 3000)
       } else {
         setToastMessage('❌ Erro ao atualizar status: ' + data.error)
         setShowToast(true)

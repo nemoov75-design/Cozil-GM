@@ -1,21 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-// Interface para dados de lembrete
-interface LembreteData {
-  id: string
-  equipamento: string
-  local: string
-  tipo_manutencao: string
-  data_programada: string
-  hora_programada?: string
-  responsavel?: string
-  prioridade: string
-  status: string
-}
-
-// Função para enviar email de lembrete
-async function enviarEmailLembrete(cronograma: LembreteData) {
+// Função para enviar email de conclusão
+async function enviarEmailConclusao(cronograma: any) {
   try {
     // Buscar todos os usuários cadastrados para enviar notificação
     const { data: usuarios, error: usuariosError } = await supabase
@@ -36,23 +23,26 @@ async function enviarEmailLembrete(cronograma: LembreteData) {
     const dataFormatada = new Date(cronograma.data_programada).toLocaleDateString('pt-BR')
     const horaFormatada = cronograma.hora_programada ? ` às ${cronograma.hora_programada}` : ''
     
-    const assunto = `🔔 Lembrete: Manutenção Preventiva - ${cronograma.equipamento}`
+    const assunto = `✅ Concluída: Manutenção Preventiva - ${cronograma.equipamento}`
     
     const corpoEmail = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
-        <div style="background-color: #dc2626; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
-          <h1 style="margin: 0; font-size: 24px;">🔔 Lembrete de Manutenção Preventiva</h1>
+        <div style="background-color: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px;">✅ Manutenção Preventiva Concluída</h1>
         </div>
         
         <div style="background-color: white; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <h2 style="color: #dc2626; margin-top: 0;">Manutenção Programada</h2>
+          <h2 style="color: #16a34a; margin-top: 0;">Manutenção Finalizada</h2>
           
-          <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
-            <p style="margin: 0; font-size: 18px; font-weight: bold; color: #dc2626;">
+          <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; font-size: 18px; font-weight: bold; color: #16a34a;">
               ${cronograma.equipamento}
             </p>
             <p style="margin: 5px 0 0 0; color: #666;">
-              <strong>Data:</strong> ${dataFormatada}${horaFormatada}
+              <strong>Data Programada:</strong> ${dataFormatada}${horaFormatada}
+            </p>
+            <p style="margin: 5px 0 0 0; color: #16a34a; font-weight: bold;">
+              ✅ Status: Concluída
             </p>
           </div>
           
@@ -85,24 +75,24 @@ async function enviarEmailLembrete(cronograma: LembreteData) {
             </div>
           </div>
           
-          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #374151; margin: 0 0 10px 0; font-size: 16px;">ℹ️ Informações Importantes</h3>
+          <div style="background-color: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #16a34a; margin: 0 0 10px 0; font-size: 16px;">🎉 Manutenção Concluída com Sucesso</h3>
             <ul style="margin: 0; padding-left: 20px; color: #666;">
-              <li>Esta manutenção está programada para <strong>${dataFormatada}${horaFormatada}</strong></li>
-              <li>Certifique-se de que o equipamento estará disponível no horário programado</li>
-              <li>Em caso de dúvidas, entre em contato com o responsável</li>
+              <li>A manutenção preventiva foi <strong>finalizada com sucesso</strong></li>
+              <li>O equipamento está <strong>funcionando normalmente</strong></li>
+              <li>Próxima manutenção deve ser agendada conforme cronograma</li>
             </ul>
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="https://cozil-gm.vercel.app/" 
-               style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+               style="background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               Acessar Sistema
             </a>
           </div>
           
           <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center; color: #6b7280; font-size: 14px;">
-            <p style="margin: 0;">Este é um lembrete automático do sistema Cozil-Maintenanc</p>
+            <p style="margin: 0;">Este é um notificação automática do sistema Cozil-Maintenanc</p>
             <p style="margin: 5px 0 0 0;">Para mais informações, acesse o sistema de manutenção</p>
           </div>
         </div>
@@ -122,14 +112,14 @@ async function enviarEmailLembrete(cronograma: LembreteData) {
             subject: assunto,
             html: corpoEmail,
             nome: usuario.nome,
-            tipo: 'lembrete_cronograma'
+            tipo: 'conclusao_cronograma'
           })
         })
         
         if (!response.ok) {
           console.error(`❌ Erro ao enviar email para ${usuario.email}:`, response.statusText)
         } else {
-          console.log(`✅ Email de lembrete enviado para ${usuario.email}`)
+          console.log(`✅ Email de conclusão enviado para ${usuario.email}`)
         }
       } catch (error) {
         console.error(`❌ Erro ao enviar email para ${usuario.email}:`, error)
@@ -139,110 +129,74 @@ async function enviarEmailLembrete(cronograma: LembreteData) {
     return true
     
   } catch (error) {
-    console.error('❌ Erro ao enviar email de lembrete:', error)
+    console.error('❌ Erro ao enviar email de conclusão:', error)
     return false
   }
 }
 
-// POST - Enviar lembretes de manutenções programadas
+// POST - Notificar conclusão de manutenção
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔔 Verificando lembretes de manutenção preventiva...')
+    const { cronogramaId } = await request.json()
     
-    // Buscar manutenções que estão próximas (hoje ou amanhã)
-    const hoje = new Date().toISOString().split('T')[0]
-    const amanha = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    if (!cronogramaId) {
+      return NextResponse.json(
+        { error: 'ID do cronograma é obrigatório' },
+        { status: 400 }
+      )
+    }
     
+    console.log('📧 Enviando notificação de conclusão para:', cronogramaId)
+    
+    // Buscar dados do cronograma
     const { data: cronograma, error } = await supabase
       .from('cronograma_manutencao')
       .select('*')
-      .in('data_programada', [hoje, amanha])
-      .eq('status', 'Agendada')
-      .order('data_programada', { ascending: true })
+      .eq('id', cronogramaId)
+      .single()
     
     if (error) {
       console.error('❌ Erro ao buscar cronograma:', error)
       return NextResponse.json(
         { 
-          error: 'Erro ao buscar manutenções programadas',
+          error: 'Erro ao buscar dados da manutenção',
           details: error.message
         },
         { status: 500 }
       )
     }
     
-    if (!cronograma || cronograma.length === 0) {
-      console.log('ℹ️ Nenhuma manutenção programada para hoje ou amanhã')
-      return NextResponse.json({
-        success: true,
-        message: 'Nenhuma manutenção programada para hoje ou amanhã',
-        enviados: 0
-      })
+    if (!cronograma) {
+      return NextResponse.json(
+        { error: 'Manutenção não encontrada' },
+        { status: 404 }
+      )
     }
     
-    console.log(`📅 Encontradas ${cronograma.length} manutenções programadas`)
+    // Enviar email de conclusão
+    const sucesso = await enviarEmailConclusao(cronograma)
     
-    // Enviar lembretes para cada manutenção
-    let enviados = 0
-    for (const item of cronograma) {
-      const sucesso = await enviarEmailLembrete(item)
-      if (sucesso) {
-        enviados++
-      }
+    if (!sucesso) {
+      return NextResponse.json(
+        { error: 'Erro ao enviar notificação de conclusão' },
+        { status: 500 }
+      )
     }
     
-    console.log(`✅ Lembretes enviados: ${enviados}/${cronograma.length}`)
+    console.log('✅ Notificação de conclusão enviada com sucesso')
     
     return NextResponse.json({
       success: true,
-      message: `Lembretes enviados com sucesso`,
-      total: cronograma.length,
-      enviados: enviados
+      message: 'Notificação de conclusão enviada com sucesso'
     })
     
   } catch (error) {
-    console.error('❌ Erro ao processar lembretes:', error)
+    console.error('❌ Erro ao processar notificação de conclusão:', error)
     return NextResponse.json(
       { 
         error: 'Erro interno do servidor',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
       },
-      { status: 500 }
-    )
-  }
-}
-
-// GET - Verificar lembretes (para teste)
-export async function GET(request: NextRequest) {
-  try {
-    const hoje = new Date().toISOString().split('T')[0]
-    const amanha = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    
-    const { data: cronograma, error } = await supabase
-      .from('cronograma_manutencao')
-      .select('*')
-      .in('data_programada', [hoje, amanha])
-      .eq('status', 'Agendada')
-      .order('data_programada', { ascending: true })
-    
-    if (error) {
-      return NextResponse.json(
-        { error: 'Erro ao buscar cronograma', details: error.message },
-        { status: 500 }
-      )
-    }
-    
-    return NextResponse.json({
-      success: true,
-      cronograma: cronograma || [],
-      total: cronograma?.length || 0,
-      hoje: hoje,
-      amanha: amanha
-    })
-    
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
