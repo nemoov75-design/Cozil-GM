@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
       try {
         const result = await apiInstance.sendTransacEmail(sendSmtpEmail)
         console.log(`✅ Email enviado para: ${user.email}`)
-        return { success: true, email: user.email, id: result.response?.body?.messageId }
+        return { success: true, email: user.email, id: result.response?.messageId || 'sent' }
       } catch (error: any) {
         console.error(`❌ Erro ao enviar para ${user.email}:`, error)
         return { success: false, email: user.email, error: error.message || 'Erro desconhecido' }
