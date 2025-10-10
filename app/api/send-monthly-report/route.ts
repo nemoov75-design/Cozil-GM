@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
                 <div style="background: #f9fafb; padding: 15px; border-radius: 5px;">
                   <p style="margin: 5px 0; color: #374151;">• Taxa de conclusão: <strong>${((reportData.concluidas/reportData.totalOSs)*100).toFixed(1)}%</strong></p>
                   <p style="margin: 5px 0; color: #374151;">• OSs de alta prioridade: <strong>${reportData.altas} (${((reportData.altas/reportData.totalOSs)*100).toFixed(1)}%)</strong></p>
-                  <p style="margin: 5px 0; color: #374151;">• Performance geral: <strong>${reportData.eficiencia > 80 ? 'Excelente' : reportData.eficiencia > 60 ? 'Boa' : 'Necessita atenção'}</strong></p>
+                  <p style="margin: 5px 0; color: #374151;">• Performance geral: <strong>${parseFloat(reportData.eficiencia) > 80 ? 'Excelente' : parseFloat(reportData.eficiencia) > 60 ? 'Boa' : 'Necessita atenção'}</strong></p>
                 </div>
               </div>
               
