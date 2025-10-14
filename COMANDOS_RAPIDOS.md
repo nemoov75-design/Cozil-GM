@@ -1,4 +1,4 @@
-# ⚡ COMANDOS RÁPIDOS - Cozil-Maintenanc
+# ⚡ COMANDOS RÁPIDOS - CozilTech
 
 ## 🚀 DESENVOLVIMENTO LOCAL
 
@@ -186,7 +186,7 @@ npm update
 | Serviço | URL |
 |---------|-----|
 | **Sistema (Local)** | http://localhost:3000 |
-| **Sistema (Produção)** | https://cozil-maintenanc.vercel.app |
+| **Sistema (Produção)** | https://cozil-manutencao.vercel.app |
 | **GitHub** | https://github.com/nemoov75-design/cozil-maintenance |
 | **Vercel** | https://vercel.com |
 | **Supabase** | https://supabase.com/dashboard |

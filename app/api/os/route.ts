@@ -58,16 +58,11 @@ export async function POST(request: NextRequest) {
       
       // Processar fotos (apenas nomes)
       const fotos: string[] = []
-      try {
-        const entries = Array.from(formData.entries())
-        for (const [key, value] of entries) {
-          if (key.startsWith('foto_') && value instanceof File) {
-            console.log('📷 Foto encontrada:', key, value.name, value.size)
-            fotos.push(value.name)
-          }
+      for (const [key, value] of formData.entries()) {
+        if (key.startsWith('foto_') && value instanceof File) {
+          console.log('📷 Foto encontrada:', key, value.name, value.size)
+          fotos.push(value.name)
         }
-      } catch (error) {
-        console.log('📷 Erro ao processar fotos:', error)
       }
       body.fotos = fotos
       console.log('📷 Total de fotos processadas:', fotos.length)

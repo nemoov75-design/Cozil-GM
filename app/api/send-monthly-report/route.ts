@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const concluidas = workOrders?.filter((os: any) => os.status === 'Concluído').length || 0
     const pendentes = workOrders?.filter((os: any) => os.status !== 'Concluído').length || 0
     const altas = workOrders?.filter((os: any) => os.prioridade === 'Alta').length || 0
-    const eficiencia = totalOSs > 0 ? ((concluidas / totalOSs) * 100).toFixed(1) : '0'
+    const eficiencia = totalOSs > 0 ? ((concluidas / totalOSs) * 100).toFixed(1) : 0
     
     console.log('📊 Dados calculados:', { totalOSs, concluidas, pendentes, altas, eficiencia })
     
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       concluidas,
       pendentes,
       altas,
-      eficiencia: eficiencia
+      eficiencia: parseFloat(eficiencia)
     }
     
     // Enviar para cada usuário
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
                 <div style="background: #f9fafb; padding: 15px; border-radius: 5px;">
                   <p style="margin: 5px 0; color: #374151;">• Taxa de conclusão: <strong>${((reportData.concluidas/reportData.totalOSs)*100).toFixed(1)}%</strong></p>
                   <p style="margin: 5px 0; color: #374151;">• OSs de alta prioridade: <strong>${reportData.altas} (${((reportData.altas/reportData.totalOSs)*100).toFixed(1)}%)</strong></p>
-                  <p style="margin: 5px 0; color: #374151;">• Performance geral: <strong>${parseFloat(reportData.eficiencia) > 80 ? 'Excelente' : parseFloat(reportData.eficiencia) > 60 ? 'Boa' : 'Necessita atenção'}</strong></p>
+                  <p style="margin: 5px 0; color: #374151;">• Performance geral: <strong>${reportData.eficiencia > 80 ? 'Excelente' : reportData.eficiencia > 60 ? 'Boa' : 'Necessita atenção'}</strong></p>
                 </div>
               </div>
               
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
       try {
         const result = await apiInstance.sendTransacEmail(sendSmtpEmail)
         console.log(`✅ Email enviado para: ${user.email}`)
-        return { success: true, email: user.email, id: result.response?.messageId || 'sent' }
+        return { success: true, email: user.email, id: result.response?.body?.messageId }
       } catch (error: any) {
         console.error(`❌ Erro ao enviar para ${user.email}:`, error)
         return { success: false, email: user.email, error: error.message || 'Erro desconhecido' }

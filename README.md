@@ -1,4 +1,4 @@
-# Cozil-Maintenanc - Sistema Inteligente de Manutenção
+# CozilTech - Sistema Inteligente de Manutenção
 
 Sistema completo de gerenciamento de ordens de serviço e manutenção desenvolvido com Next.js, TypeScript e Supabase.
 
@@ -62,4 +62,4 @@ Para dúvidas ou problemas, consulte a documentação ou entre em contato com a 
 
 ---
 
-**Cozil-Maintenanc** - Desenvolvido com ❤️ para otimizar processos de manutenção.
+**Cozil** - Desenvolvido com ❤️ para otimizar processos de manutenção.

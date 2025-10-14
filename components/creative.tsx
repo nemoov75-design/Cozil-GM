@@ -36,7 +36,7 @@ import {
   Filter,
   Eye,
   Edit,
-  Printer,
+  Printer
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -128,7 +128,6 @@ export function DesignaliCreative() {
     concluidas: 0,
     altas: 0
   })
-  
   const [selectedOS, setSelectedOS] = useState<any>(null)
   const [showOSDetails, setShowOSDetails] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -195,19 +194,11 @@ export function DesignaliCreative() {
       fetchWorkOrders()
       
       // Atualizar a cada 30 segundos
-      const interval = setInterval(() => {
-        fetchWorkOrders()
-      }, 30000)
+      const interval = setInterval(fetchWorkOrders, 30000)
       
       return () => clearInterval(interval)
     }
   }, [user])
-
-  // Forçar reload para evitar cache
-  useEffect(() => {
-    const timestamp = Date.now()
-    console.log('🔄 Sistema carregado em:', new Date(timestamp).toLocaleString())
-  }, [])
 
   // 🔔 Registrar Service Worker e solicitar permissão de notificações
   useEffect(() => {
@@ -388,8 +379,6 @@ export function DesignaliCreative() {
       return 'N/A'
     }
   }
-
-
 
   // Função para buscar OSs da API
   const fetchWorkOrders = async () => {
@@ -2030,7 +2019,6 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                   </section>
                 </TabsContent>
 
-
                 <TabsContent value="new-order" className="space-y-8 mt-0">
                   <section>
                     <motion.div
@@ -2103,6 +2091,9 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
                                     <SelectItem value="Almoxarifado">Almoxarifado</SelectItem>
                                     <SelectItem value="Restaurante">Restaurante</SelectItem>
                                     <SelectItem value="T.I.">T.I.</SelectItem>
+                                    <SelectItem value="Refrigeração">Refrigeração</SelectItem>
+                                    <SelectItem value="Fábrica">Fábrica</SelectItem>
+                                    <SelectItem value="Vestiário">Vestiário</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -3379,7 +3370,6 @@ SISTEMA COZIL - GESTÃO DE MANUTENÇÃO
           </div>
         </motion.div>
       )}
-
     </div>
   )
 }
